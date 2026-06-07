@@ -1,0 +1,1494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Weight of Glass — An Interactive Novel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Lora:ital,wght@0,400;0,500;1,400;1,500&family=Cinzel+Decorative:wght@400&family=Cinzel:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0b0f;
+  --surface: #0f1018;
+  --paper: #f0ebe0;
+  --paper-dark: #e2dace;
+  --ink: #1c1a16;
+  --ink-light: #4a4540;
+  --gold: #c9a84c;
+  --gold-dim: #7a6530;
+  --crimson: #8b1a1a;
+  --slate: #2a3040;
+  --mist: #8fa3b0;
+  --accent: #c9a84c;
+  --warn: #b05030;
+  --font-display: 'Cinzel', serif;
+  --font-deco: 'Cinzel Decorative', serif;
+  --font-body: 'Lora', serif;
+  --font-head: 'Playfair Display', serif;
+}
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--paper);
+  font-family: var(--font-body);
+  min-height: 100vh;
+  overflow-x: hidden;
+  cursor: default;
+}
+
+/* ═══════════════════════════════════
+   COVER
+═══════════════════════════════════ */
+#cover {
+  position: fixed; inset: 0; z-index: 200;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  text-align: center;
+  padding: 2rem;
+  background: radial-gradient(ellipse 80% 60% at 50% 40%, #1a1c2a 0%, #070809 100%);
+  transition: opacity 1.5s ease, visibility 1.5s ease;
+}
+#cover.out { opacity: 0; visibility: hidden; }
+
+.cover-eyebrow {
+  font-family: var(--font-display);
+  font-size: 0.6rem;
+  letter-spacing: 0.55em;
+  color: var(--gold-dim);
+  text-transform: uppercase;
+  margin-bottom: 3rem;
+}
+
+.cover-ornament {
+  width: 1px; height: 60px;
+  background: linear-gradient(to bottom, transparent, var(--gold-dim), transparent);
+  margin: 0 auto 3rem;
+}
+
+.cover-title {
+  font-family: var(--font-deco);
+  font-size: clamp(2.2rem, 7vw, 5.5rem);
+  font-weight: 400;
+  line-height: 1.1;
+  color: var(--paper);
+  text-shadow: 0 0 80px rgba(201,168,76,0.2);
+  margin-bottom: 1.5rem;
+  letter-spacing: 0.02em;
+}
+
+.cover-subtitle {
+  font-family: var(--font-head);
+  font-style: italic;
+  font-size: clamp(0.95rem, 2.2vw, 1.25rem);
+  color: var(--gold);
+  margin-bottom: 3.5rem;
+  opacity: 0.8;
+}
+
+.cover-rule {
+  width: 120px; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold-dim), transparent);
+  margin: 0 auto 3rem;
+}
+
+.cover-blurb {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: clamp(0.88rem, 1.8vw, 1.05rem);
+  color: #9a9080;
+  max-width: 440px;
+  line-height: 1.8;
+  margin-bottom: 3.5rem;
+}
+
+.cover-warning {
+  font-family: var(--font-display);
+  font-size: 0.6rem;
+  letter-spacing: 0.3em;
+  color: var(--warn);
+  text-transform: uppercase;
+  margin-bottom: 2rem;
+  opacity: 0.7;
+}
+
+.btn-open {
+  font-family: var(--font-display);
+  font-size: 0.65rem;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  color: var(--bg);
+  background: var(--gold);
+  border: none;
+  padding: 1.1rem 3rem;
+  cursor: pointer;
+  transition: background 0.3s, transform 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+.btn-open:hover { background: #dbb85c; transform: translateY(-1px); }
+
+/* ═══════════════════════════════════
+   READER SHELL
+═══════════════════════════════════ */
+#reader {
+  display: none;
+  min-height: 100vh;
+  position: relative;
+}
+#reader.on { display: block; }
+
+/* Reading progress */
+#progress {
+  position: fixed; top: 0; left: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--crimson), var(--gold));
+  z-index: 100;
+  transition: width 0.6s ease;
+  width: 0%;
+}
+
+/* Fixed header */
+#rdr-header {
+  position: fixed; top: 0; left: 0; right: 0;
+  height: 52px;
+  background: rgba(10,11,15,0.92);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(201,168,76,0.12);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 clamp(1rem, 5vw, 3rem);
+  z-index: 90;
+}
+
+.hdr-title {
+  font-family: var(--font-display);
+  font-size: 0.6rem;
+  letter-spacing: 0.4em;
+  color: var(--gold-dim);
+  text-transform: uppercase;
+}
+
+.hdr-chapter {
+  font-family: var(--font-head);
+  font-style: italic;
+  font-size: 0.8rem;
+  color: #5a5550;
+}
+
+.hdr-path {
+  font-family: var(--font-display);
+  font-size: 0.55rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  padding: 0.3rem 0.8rem;
+  border: 1px solid;
+  transition: all 0.3s;
+}
+.hdr-path.path-a { color: var(--mist); border-color: rgba(143,163,176,0.4); }
+.hdr-path.path-b { color: #c08070; border-color: rgba(192,128,112,0.4); }
+.hdr-path.hidden { opacity: 0; pointer-events: none; }
+
+/* ═══════════════════════════════════
+   BOOK PAGE
+═══════════════════════════════════ */
+#page-wrap {
+  max-width: 740px;
+  margin: 0 auto;
+  padding: 90px clamp(1.2rem, 6vw, 4rem) 5rem;
+}
+
+/* Page fade */
+#page-wrap.fading { animation: pgFade 0.5s ease both; }
+@keyframes pgFade {
+  0% { opacity: 0; transform: translateY(12px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* Chapter opener */
+.ch-opener {
+  text-align: center;
+  padding-bottom: 3rem;
+  margin-bottom: 3.5rem;
+  border-bottom: 1px solid rgba(201,168,76,0.18);
+}
+
+.ch-label {
+  font-family: var(--font-display);
+  font-size: 0.58rem;
+  letter-spacing: 0.55em;
+  color: var(--gold-dim);
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+  display: block;
+}
+
+.ch-title {
+  font-family: var(--font-head);
+  font-size: clamp(2rem, 5vw, 3.2rem);
+  font-weight: 700;
+  color: var(--paper);
+  line-height: 1.1;
+  margin-bottom: 1.2rem;
+}
+
+.ch-path-note {
+  font-family: var(--font-display);
+  font-size: 0.55rem;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  margin-bottom: 1.2rem;
+  padding: 0.4rem 1rem;
+  display: inline-block;
+  border: 1px solid;
+}
+.ch-path-note.a { color: var(--mist); border-color: rgba(143,163,176,0.35); }
+.ch-path-note.b { color: #c08070; border-color: rgba(192,128,112,0.35); }
+
+.ch-epigraph {
+  font-family: var(--font-head);
+  font-style: italic;
+  font-size: 0.95rem;
+  color: #6a6055;
+  line-height: 1.7;
+  max-width: 420px;
+  margin: 0 auto;
+}
+.ch-epigraph cite {
+  display: block;
+  margin-top: 0.6rem;
+  font-size: 0.8rem;
+  font-style: normal;
+  font-family: var(--font-display);
+  letter-spacing: 0.15em;
+  color: #504840;
+}
+
+/* Prose */
+.prose p {
+  font-family: var(--font-body);
+  font-size: clamp(0.98rem, 1.8vw, 1.08rem);
+  line-height: 1.95;
+  color: #c8c0b0;
+  margin-bottom: 1.6em;
+  text-align: justify;
+  hyphens: auto;
+}
+
+.prose p:first-of-type::first-letter {
+  font-family: var(--font-head);
+  font-size: 4.2em;
+  font-weight: 700;
+  float: left;
+  line-height: 0.72;
+  margin: 0.06em 0.08em 0 0;
+  color: var(--gold);
+}
+
+.prose em { font-style: italic; color: #d8d0c0; }
+.prose strong { font-weight: 600; color: var(--paper); }
+
+.prose .scene-break {
+  text-align: center;
+  color: var(--gold-dim);
+  letter-spacing: 0.6em;
+  font-size: 0.75rem;
+  margin: 2.5rem 0;
+  opacity: 0.5;
+}
+
+/* Pull quote */
+.pull-quote {
+  border-left: 2px solid var(--gold-dim);
+  margin: 2.5rem 0 2.5rem 1.5rem;
+  padding: 0.5rem 0 0.5rem 1.5rem;
+}
+.pull-quote p {
+  font-family: var(--font-head) !important;
+  font-style: italic !important;
+  font-size: 1.15rem !important;
+  color: #a09080 !important;
+  line-height: 1.6 !important;
+  margin-bottom: 0 !important;
+  text-align: left !important;
+}
+.pull-quote p::first-letter { all: unset !important; }
+
+/* Page nav */
+.page-nav {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-top: 3.5rem;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(201,168,76,0.15);
+}
+
+.pnav-btn {
+  font-family: var(--font-display);
+  font-size: 0.6rem;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  background: none;
+  border: 1px solid rgba(201,168,76,0.3);
+  color: var(--gold-dim);
+  padding: 0.7rem 1.5rem;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+.pnav-btn:hover:not(:disabled) { border-color: var(--gold); color: var(--gold); }
+.pnav-btn:disabled { opacity: 0.2; cursor: default; }
+
+.pnav-info {
+  font-family: var(--font-head);
+  font-style: italic;
+  font-size: 0.82rem;
+  color: #4a4540;
+  text-align: center;
+}
+.pnav-info small { display: block; font-size: 0.7rem; margin-top: 0.2rem; font-style: normal; font-family: var(--font-display); letter-spacing: 0.2em; color: #35302a; text-transform: uppercase; }
+
+/* ═══════════════════════════════════
+   BRANCH POINT
+═══════════════════════════════════ */
+.branch-section {
+  margin-top: 4rem;
+}
+
+.branch-divider {
+  display: flex; align-items: center; gap: 1.5rem;
+  margin-bottom: 3rem;
+}
+.branch-divider::before, .branch-divider::after {
+  content: '';
+  flex: 1; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(201,168,76,0.3), transparent);
+}
+.branch-divider span {
+  font-family: var(--font-display);
+  font-size: 0.55rem;
+  letter-spacing: 0.5em;
+  color: var(--gold-dim);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.branch-quandary {
+  font-family: var(--font-head);
+  font-size: clamp(1.1rem, 2.5vw, 1.45rem);
+  font-style: italic;
+  color: var(--crimson);
+  text-align: center;
+  line-height: 1.55;
+  margin-bottom: 1.2rem;
+  padding: 0 0.5rem;
+}
+
+.branch-context {
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  color: #6a6055;
+  font-style: italic;
+  text-align: center;
+  line-height: 1.75;
+  max-width: 520px;
+  margin: 0 auto 3rem;
+}
+
+.branch-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+@media (max-width: 560px) { .branch-grid { grid-template-columns: 1fr; } }
+
+.branch-card {
+  border: 1px solid rgba(201,168,76,0.25);
+  padding: 2rem 1.6rem 1.8rem;
+  cursor: pointer;
+  background: rgba(255,255,255,0.02);
+  transition: all 0.35s ease;
+  position: relative;
+}
+.branch-card::before {
+  content: '';
+  position: absolute; inset: 0;
+  opacity: 0; transition: opacity 0.35s;
+}
+.branch-card.card-a::before { background: linear-gradient(135deg, rgba(143,163,176,0.07), transparent); }
+.branch-card.card-b::before { background: linear-gradient(135deg, rgba(192,128,112,0.07), transparent); }
+.branch-card:hover { transform: translateY(-3px); }
+.branch-card.card-a:hover { border-color: var(--mist); box-shadow: 0 8px 30px rgba(143,163,176,0.1); }
+.branch-card.card-b:hover { border-color: #c08070; box-shadow: 0 8px 30px rgba(192,128,112,0.1); }
+.branch-card:hover::before { opacity: 1; }
+
+.bc-path-label {
+  font-family: var(--font-display);
+  font-size: 0.52rem;
+  letter-spacing: 0.45em;
+  text-transform: uppercase;
+  margin-bottom: 0.9rem;
+  display: block;
+}
+.card-a .bc-path-label { color: var(--mist); }
+.card-b .bc-path-label { color: #c08070; }
+
+.bc-title {
+  font-family: var(--font-head);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--paper);
+  margin-bottom: 0.8rem;
+  line-height: 1.3;
+}
+
+.bc-desc {
+  font-family: var(--font-body);
+  font-size: 0.86rem;
+  color: #6a6055;
+  font-style: italic;
+  line-height: 1.65;
+}
+
+/* Consequence reveal */
+.consequence-wrap {
+  border: 1px solid rgba(201,168,76,0.2);
+  background: rgba(255,255,255,0.02);
+  padding: 2rem 2.2rem;
+  margin-top: 1rem;
+  animation: pgFade 0.7s ease both;
+}
+
+.csq-label {
+  font-family: var(--font-display);
+  font-size: 0.52rem;
+  letter-spacing: 0.45em;
+  text-transform: uppercase;
+  margin-bottom: 0.7rem;
+  display: block;
+}
+.csq-label.a { color: var(--mist); }
+.csq-label.b { color: #c08070; }
+
+.csq-text {
+  font-family: var(--font-head);
+  font-style: italic;
+  font-size: 1rem;
+  color: #a09080;
+  line-height: 1.7;
+  margin-bottom: 0.5rem;
+}
+
+.csq-continue {
+  font-family: var(--font-display);
+  font-size: 0.55rem;
+  letter-spacing: 0.35em;
+  color: #504840;
+  text-transform: uppercase;
+  margin-top: 1.2rem;
+}
+
+/* Ending */
+.ending-wrap {
+  text-align: center;
+  padding: 3rem 0;
+  border-top: 1px solid rgba(201,168,76,0.15);
+  margin-top: 4rem;
+}
+.ending-label {
+  font-family: var(--font-display);
+  font-size: 0.55rem;
+  letter-spacing: 0.55em;
+  color: var(--gold-dim);
+  text-transform: uppercase;
+  margin-bottom: 2rem;
+}
+.ending-title {
+  font-family: var(--font-head);
+  font-size: clamp(1.4rem, 4vw, 2.2rem);
+  font-style: italic;
+  color: var(--paper);
+  margin-bottom: 1.5rem;
+  line-height: 1.3;
+}
+.ending-text {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  color: #6a6055;
+  font-style: italic;
+  line-height: 1.8;
+  max-width: 480px;
+  margin: 0 auto 2.5rem;
+}
+.btn-restart {
+  font-family: var(--font-display);
+  font-size: 0.6rem;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  background: none;
+  border: 1px solid rgba(201,168,76,0.4);
+  color: var(--gold-dim);
+  padding: 0.9rem 2.5rem;
+  cursor: pointer;
+  transition: all 0.25s;
+  margin: 0 0.5rem 0.5rem;
+}
+.btn-restart:hover { border-color: var(--gold); color: var(--gold); }
+
+/* Path tracker sidebar */
+#path-sidebar {
+  position: fixed;
+  right: 1.5rem; top: 50%;
+  transform: translateY(-50%);
+  display: flex; flex-direction: column;
+  gap: 0.6rem; align-items: center;
+  z-index: 80;
+}
+@media (max-width: 900px) { #path-sidebar { display: none; } }
+
+.ps-node {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: rgba(201,168,76,0.15);
+  border: 1px solid rgba(201,168,76,0.25);
+  transition: all 0.4s;
+}
+.ps-node.active { background: var(--gold); box-shadow: 0 0 8px rgba(201,168,76,0.4); width: 8px; height: 8px; }
+.ps-node.done { background: rgba(201,168,76,0.4); }
+.ps-connector {
+  width: 1px; height: 20px;
+  background: rgba(201,168,76,0.15);
+}
+
+/* Ambient bg glow */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background:
+    radial-gradient(ellipse 40% 30% at 15% 20%, rgba(139,26,26,0.04) 0%, transparent 100%),
+    radial-gradient(ellipse 30% 40% at 85% 80%, rgba(42,48,64,0.08) 0%, transparent 100%);
+  pointer-events: none; z-index: -1;
+}
+</style>
+</head>
+<body>
+
+<!-- ══════ COVER ══════ -->
+<div id="cover">
+  <p class="cover-eyebrow">An Interactive Novel in Three Acts</p>
+  <div class="cover-ornament"></div>
+  <h1 class="cover-title">The Weight<br>of Glass</h1>
+  <p class="cover-subtitle">A story about what we did, and what it did to us</p>
+  <div class="cover-rule"></div>
+  <p class="cover-blurb">Daniel Voss is a man who knows exactly what he did twelve years ago. He has not, in all that time, told a single living person the truth. Now something has found him — and it will not leave until he decides what kind of man he intends to be.</p>
+  <p class="cover-warning">⚠ &nbsp; Contains themes of grief, guilt, and moral injury</p>
+  <button class="btn-open" onclick="openBook()">Open the Book</button>
+</div>
+
+<!-- ══════ READER ══════ -->
+<div id="reader">
+  <div id="progress"></div>
+
+  <header id="rdr-header">
+    <div class="hdr-title">The Weight of Glass</div>
+    <div class="hdr-chapter" id="hdr-ch">Chapter One</div>
+    <div class="hdr-path hidden" id="hdr-path"></div>
+  </header>
+
+  <div id="path-sidebar">
+    <div class="ps-node active" id="ps-0"></div>
+    <div class="ps-connector"></div>
+    <div class="ps-node" id="ps-1"></div>
+    <div class="ps-connector"></div>
+    <div class="ps-node" id="ps-2"></div>
+  </div>
+
+  <div id="page-wrap">
+    <!-- Rendered by JS -->
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════════
+// STORY DATA
+// ══════════════════════════════════════════════════════════════════
+
+const STORY = {
+
+// ─────────────────────────────────────────────────────────────────
+// CHAPTER ONE — shared by both paths
+// ─────────────────────────────────────────────────────────────────
+ch1: {
+  label: "Chapter One",
+  title: "The Visitation",
+  epigraph: { text: "The past is never dead. It's not even past.", credit: "William Faulkner" },
+  path: null,
+  pages: [
+
+    `<p>The glass arrived on a Tuesday in March, which was already suspicious. Nothing significant had ever happened to Daniel Voss on a Tuesday. His daughter had been born on a Saturday; his marriage had ended on a Friday, drawn out across a long October weekend like something being slowly stretched. His mother had died on a Wednesday, and he had not wept until Thursday morning, standing in the shower with the water going cold around him. Tuesdays had always been administrative days — the days where you did the things that kept you alive but did not, in any meaningful sense, require you to be conscious for them.</p>
+    <p>But on this Tuesday, a package arrived at the door of his studio apartment in the Crane Building, addressed in handwriting he recognized immediately and had not seen in twelve years. He recognized it the way you recognize a smell from childhood — before your brain has finished processing it, before thought intervenes. His body recognized the handwriting. His stomach clenched around it like a fist.</p>
+    <p>The package was the size of a shoebox, wrapped in brown paper, secured with string. There was no return address. The postmark was blurred beyond legibility — he held it under the kitchen light and squinted and the digits remained a watercolor smear, as though the package had passed through weather that ordinary mail did not encounter. He set it on the kitchen table and made coffee he did not want and stood looking at the package for twenty minutes before he accepted that he was going to open it regardless of what he did in the next twenty minutes, and that stalling was simply the mind's way of staging a performance of deliberation it had already abandoned.</p>
+    <p>He cut the string. He unwrapped the paper carefully, as though the care with which he treated the exterior might somehow prepare him for the interior. Inside the box, packed in tissue paper that had once been white and was now the colour of old teeth, was a drinking glass.</p>
+    <p>It was a plain glass. A tumbler, the kind you found in the back of any kitchen cabinet — eight ounces, slightly thicker at the base, with a faint ring of discoloration just below the rim where something had dried long ago. He knew this glass. He had held this glass. On the night of September 14th, twelve years ago, he had been holding this glass when he made the decision that had rerouted the remainder of his life into its current, narrower channel.</p>`,
+
+    `<p>Daniel Voss was forty-four years old and taught secondary school mathematics in a building that smelled of institutional cleaning products and the particular desperation of sixteen-year-olds who would rather be anywhere else. He was, by most observable metrics, a decent man. He gave money to three charities by direct debit on the first of every month. He phoned his daughter Lena every Sunday at seven o'clock and listened with genuine interest to the details of her life at university in Edinburgh. He was polite to his neighbours and carried his recycling down to the shared bins even in rain. He had two close friends, Martin and Clare, who had known him for decades and who would, if asked, describe him as quiet, reliable, and occasionally too hard on himself.</p>
+    <p>None of them knew. He had made very sure of that. It was the central achievement of the last twelve years — not the career, not the parenting from a distance, not the reconstituted life in this apartment with its secondhand furniture and its view of the car park — but the maintenance of the not-knowing in everyone who knew him. He had become an expert in the architecture of omission. He understood, in a way he could not have explained without confessing the very thing he was explaining, that the key to keeping a secret was not silence but misdirection — the ability to give people something true to think about you, something vulnerable and real, so that they felt they understood your depths and did not look further.</p>
+    <p>What had happened on September 14th was this: he had watched a man die and had not prevented it when prevention had been within his power, and he had then made a series of decisions in the minutes and hours that followed which had ensured that no one would ever know it had been within his power. He had stood at the edge of that particular threshold, had looked down at what telling the truth would cost him — his career, his marriage, his daughter's particular vision of her father — and had chosen, with full consciousness and cold deliberation, to walk away from it.</p>
+    <p>The man's name was Owen Marsh. He had been thirty-one years old, a colleague and occasional friend, a person who told long jokes badly and who left passive-aggressive notes about the communal coffee machine and who had, in the last year of his life, confided in Daniel about a marriage that was dissolving and a drinking problem he was trying to manage alone. He had been, in other words, a person — recognizable and flawed and entirely undeserving of what happened to him, which was that he fell down a flight of stairs at a company retreat in the Peak District, and Daniel, who was the only witness, who had been standing close enough to potentially intervene, had instead frozen and then retreated and then lied.</p>`,
+
+    `<p>The glass sat on his kitchen table for three days before it did anything.</p>
+    <p>He did not move it. He tried to decide what to do with it — throwing it away felt like a statement, keeping it felt like another kind of statement, and he had spent twelve years understanding that all his available options were statements about the same unspoken thing. So he left it where it was and moved around it with the practised spatial awareness of a man who has been moving around something for a very long time.</p>
+    <p>On the fourth morning, a Thursday, he came into the kitchen before dawn — insomnia had been with him long enough that he thought of it as a companion rather than a symptom — and found that the glass had water in it.</p>
+    <p>He was certain the glass had been empty. He had looked at it the night before, carefully, the way you look at something you are trying not to think about. He had noticed that it was empty. And now it was not.</p>
+    <p>The water was perfectly clear. There was no condensation on the outside, no ring on the table beneath it, which was wrong in the way that small physical impossibilities are wrong — not dramatically, not cinematically, but with a quiet and insistent wrongness that sits in the back of the throat. He stood in his dressing gown in the pre-dawn kitchen and looked at the glass of water and felt, for the first time in a long time, genuinely afraid. Not of the glass. Of what the glass meant. Of the particular quality of attention it implied.</p>
+    <p>He picked it up. He smelled it — nothing, just water — and then, because he was not sure what else to do and because some deep and irrational instinct told him to, he drank it.</p>
+    <p>It tasted like nothing. And then, a second later, it tasted like guilt — which is not a flavour but is the only word he had for the way his throat closed around it, the way his eyes filled involuntarily, the way he had to set the empty glass down on the counter and grip the edge and breathe through his nose until the room stopped tilting.</p>`,
+
+    `<p>He called in sick to school for the first time in three years and spent the morning trying to find the sender. The handwriting on the package: he had stared at it for hours already and had arrived, each time, at the same unwilling conclusion. It was Owen's hand. Owen Marsh, who had been dead for twelve years, whose handwriting Daniel had seen on post-it notes and meeting agendas and — once, memorably — on a birthday card that had been left on Daniel's desk with a hand-drawn cartoon of a calculator doing something anatomically improbable. Owen's handwriting, with its characteristic left-slanting ascenders and the way the capital D ballooned on the right side.</p>
+    <p>He knew this was impossible. He held the possibility of the impossible in his mind and turned it around the way you turn something in a dark room, trying to understand its shape without being able to see it clearly. He was not a superstitious man. He did not believe in hauntings in the conventional sense, in the cinematic vocabulary of flickering lights and cold spots and voices from the walls. But he understood — he had always understood, in a way he had kept carefully quarantined from his waking life — that guilt was its own kind of haunting, that it did not require the supernatural to make a dead man present, that Owen had been with him in some essential and non-metaphorical sense for twelve years already.</p>
+    <p>Perhaps this was just the external form that the internal thing had finally taken. Perhaps the glass was simply his own mind, arriving at last at the end of its capacity to keep the compartments sealed. He was a mathematics teacher. He understood that even the most airtight systems leaked at scale, that entropy was patient, that everything which could not be resolved would eventually resolve itself in some form or another, whether you wished it to or not.</p>
+    <p>He went back to the kitchen. The glass was empty again.</p>`,
+
+    `<p>That night he dreamed of the staircase.</p>
+    <p>He always dreamed of the staircase. It was the brain's way of insisting — returning, returning, returning to the moment it could not metabolize, the way a tongue returns to a loose tooth. The staircase at Hartley House, the company retreat centre in Derbyshire: stone steps, worn smooth in the middle by a century of feet, a wooden banister that he knew even in the dream was slightly loose on the third post from the top. Dim lighting. The smell of woodsmoke from the sitting room below.</p>
+    <p>In the dream, as in reality, it was eleven forty-seven at night. He had checked his phone just before, which was how he knew. He had been coming back from the bathroom, slightly drunk — not dangerously drunk, just the particular looseness of a man who has had four drinks over four hours and has eaten well and is in the warm suspended state that he associated with company retreats and team dinners and the temporary illusion that he liked his colleagues. He had heard the sound from the top of the staircase. He had gone to the landing and looked down.</p>
+    <p>Owen was at the bottom of the upper flight, sitting on a step, with the posture of a man who has sat down heavily and unexpectedly. He was holding his chest. His face, upturned in the dim light, was the particular grey-white of paper left out in rain. He looked at Daniel. He said — and this was word for word, the sentence had burned itself into Daniel's memory with the precision of a brand — he said: <em>"Something's wrong. Dan. Something's very wrong with me."</em></p>
+    <p>In the dream, Daniel went to him. In the dream, Daniel ran down the stairs and knelt beside Owen and shouted for help and the other guests came and an ambulance was called and everything was different. In the dream, Daniel did not turn around. In the dream, Daniel did not walk back to his room and sit on the edge of his bed and wait to hear what he would hear. In the dream, he was the man he should have been.</p>
+    <p>He woke up at three in the morning and the glass on his kitchen table was full of water again and he could see it from the bedroom doorway and for a long time he simply lay there and looked at it and let it look back at him.</p>`,
+
+    `<p>He drove to Martin's house on Friday morning, which was unusual enough that Martin, who answered the door in a dressing gown with a piece of toast in his hand, looked at him with the expression of a man rapidly calculating whether this was a medical or an emotional emergency.</p>
+    <p>"Come in," Martin said, standing aside. "You look like you slept in a drain."</p>
+    <p>"I didn't sleep." Daniel came into the kitchen and sat down at the table — Martin's kitchen was everything his was not, cluttered and warm and full of evidence of a family life, children's drawings on the fridge, a dog sleeping under the table, the particular ambient richness of a home that had been fully inhabited. Daniel felt it as he always did, as something between comfort and reproach.</p>
+    <p>"What's happened?" Martin sat across from him and put down the toast. He had the quality of stillness that made him a good friend — not the stillness of disinterest but of genuine attention, the kind of person who looked at you and waited without filling the space.</p>
+    <p>Daniel opened his mouth. He had the story ready — not the real story, never the real story, but the adjusted version he had been quietly preparing on the drive over, a version involving the package and the strange glass and a feeling of being watched, framed as insomnia and anxiety and perhaps the onset of some manageable psychological difficulty. He was going to give Martin enough to feel trusted and not enough to know anything.</p>
+    <p>He opened his mouth. And then something happened that had not happened in twelve years: the adjusted version did not come.</p>
+    <p>What came instead was silence. A long, uncomfortable silence in which Martin watched him and Daniel looked at the dog under the table and felt the full weight of what he was, what he had always been in this friendship — a man who had given his closest friend a carefully crafted facsimile of intimacy and called it the real thing.</p>
+    <p>"I can't tell you," Daniel said finally. "I need you to know that there's something I can't tell you. I need someone to know that it exists, even if they can't know what it is."</p>
+    <p>Martin looked at him for a long time. "Okay," he said. "How long has it existed?"</p>
+    <p>"Twelve years."</p>
+    <p>"Okay," Martin said again. He poured Daniel a coffee. He didn't ask anything else. And the not-asking was, somehow, worse than any question would have been.</p>`,
+
+    `<p>He found Owen's wife through the internet, which felt both inevitable and obscene. She had remarried — her name was now Calloway, Frances Calloway — and she lived in a village in Shropshire and had, from what the carefully curated public surface of her life suggested, built something worth having. There were photographs of a garden. A dog. A husband who smiled easily. A son who appeared to be about ten — too young to be Owen's, which Daniel had known but still felt, upon confirming it, as something that landed heavily in his chest.</p>
+    <p>He did not contact her. He found her and looked at the photographs and then closed the laptop and sat for a while with the particular nausea of a man who has been doing the same calculation for twelve years and keeps arriving at the same remainder. What he had taken from her was not just Owen — he had not killed Owen, he needed to be precise about this, the precision was important to his ability to function — what he had taken from her was the possibility of something being done about it. Owen had had a cardiac event. He had been thirty-one and apparently healthy and his heart had betrayed him on a staircase in Derbyshire. He might have died regardless — the paramedics had suggested as much at the inquest, gently, had said that the window was likely very narrow, that the type of event was aggressive, that even immediate intervention might not have —</p>
+    <p>Might not have. This was the phrase he had built his twelve years upon. Might not have. The phrase contained just enough uncertainty to sustain a person who needed to be sustained by it.</p>
+    <p>But might not have was not the same as would not have. And Daniel knew this. Had always known it. The whole architecture of his twelve years was built on the difference between those two phrases, and it was not a comfortable architecture to live in, but it was the one he had.</p>`,
+
+    `<p>The glass, on Saturday morning, was on the kitchen counter when he woke up. He had left it on the table. He was certain of this. He had looked at it before going to bed at eleven, had stood in the kitchen doorway and looked at it and had thought, with the weary familiarity of long habit, <em>I know what you are,</em> and had gone to bed. And now it was on the counter, beside the kettle, empty.</p>
+    <p>He touched it. It was warm, which should not have been possible for a glass sitting on a kitchen counter in March, and the warmth was not the residual warmth of recent handling but something more constant, more internal — like touching the wrist of a person who is still alive.</p>
+    <p>He sat down on the kitchen floor, which was cold and slightly gritty, and held the glass in both hands and tried to have a rational thought. The rational thought he arrived at was this: something was happening to him. Whether it was happening externally, in the shared physical world, or internally, in the private world of his own psychology, was a distinction that mattered in some contexts and perhaps did not matter in this one. Something was happening, and it was about Owen, and it was about what Daniel had done and not done on the fourteenth of September twelve years ago, and it was not going to stop.</p>
+    <p>He had two choices. He had always had two choices. They were the same two choices he had been given on the staircase landing when Owen looked up at him with that grey-white face and said <em>Something's very wrong with me.</em> He had chosen once and he would, apparently, have to choose again, except this time the choice was not about whether to help but about whether to speak — whether to take the twelve years of sealed silence and open it, finally, to the air, and live with what that letting-in of air would do to everything it touched.</p>
+    <p>He put the glass on the counter and went and had a shower. He stood under water that went cold and did not move until it did, and then stood a while longer. He was thinking about Lena. He was thinking about Martin. He was thinking about Frances Calloway in her house in Shropshire with her garden and her dog and her second chance at something. He was thinking about Owen at the bottom of a staircase, looking up.</p>`,
+
+    `<p>He called Lena on Sunday, a day early, which alarmed her immediately.</p>
+    <p>"Dad. It's Saturday."</p>
+    <p>"I know. I just wanted to hear your voice."</p>
+    <p>A pause on the line — he could hear her recalibrating, deciding how worried to be. She was twenty-two and studying environmental law and had, from her mother's side, an instinct for when something was being said under the surface of something else. "Are you okay?"</p>
+    <p>"I'm fine. I'm —" He stopped. "I've been thinking about some things."</p>
+    <p>"What kind of things?"</p>
+    <p>"Old things." He looked at the glass, which he had placed in the centre of the kitchen table like a centrepiece, like a deliberate decoration. "Things I've been carrying for a long time."</p>
+    <p>"Dad." Her voice changed — lower, gentler, more careful. "You can talk to me, you know."</p>
+    <p>"I know." He did know. And he knew also that talking to her — specifically to her — was the one form of confession that was truly irreversible, because she was his daughter and what he was to her could not survive it, and he was not yet sure whether the thing he was about to do required that particular irreversibility or whether he could find some other way to be honest that left her image of him intact.</p>
+    <p>"There's something I need to do," he said. "I need to do something I should have done a long time ago. I want you to know that whatever happens — I'm doing it because I think it's the right thing. Even if it makes me look very different to you."</p>
+    <p>She was quiet for a moment. Then: "I love you, Dad. You know that."</p>
+    <p>"I know," he said. "I know."</p>
+    <p>After he hung up, he sat very still for a long time. The glass on the table was full of water again. He had not filled it. He did not try to explain this anymore.</p>`,
+
+    `<p>On Monday morning he wrote two letters.</p>
+    <p>The first was to the school, requesting an immediate leave of absence for personal reasons, offering no details, signing it with the firm signature of a man who had made a decision.</p>
+    <p>The second was harder. He wrote it and rewrote it seven times over three hours, each draft either too clinical or too self-pitying, too legally careful or not careful enough, too much about him and not enough about Owen, not enough about Owen and too much about him. The difficulty of the letter was the difficulty of all confession: that the act of confession is inescapably self-centred, that you are always, in the process of acknowledging what you did to another person, making the story about yourself — your guilt, your burden, your need for absolution. He was trying to write a letter to the inquest authority and to Frances Calloway that was genuinely about Owen, and he kept finding himself in the way.</p>
+    <p>The seventh draft began: <em>My name is Daniel Voss. I was the witness at Owen Marsh's death who stated he had not seen Owen in the hour before the incident. This was untrue. I would like to correct the record, without any expectation of absolution, and with the understanding that this information should be used however those affected see fit.</em></p>
+    <p>He read it back. It was still about him. Everything was still about him. But it was, he thought, less so than the first six versions, and perhaps that was all a confession could honestly be — a movement toward the other person, incomplete, never fully arriving, but moving.</p>
+    <p>He folded the letter. He did not seal it.</p>
+    <p>He looked at the glass.</p>
+    <p>The glass was empty now, and clean, cleaner than it had been at any point since its arrival — the ring of discoloration below the rim was gone, the faint scratching at the base was gone. It looked like a glass that had just come from a cupboard, like a glass that had never held anything it was ashamed of.</p>
+    <p>He did not know what this meant. He suspected it might mean something. He suspected, more precisely, that the glass was done with him in some way it had not been done with him before — that whatever had been communicated was, on its end, complete. That the rest was up to him.</p>`,
+
+    `<p>He kept the letter unsealed for four days.</p>
+    <p>During those four days he went for long walks in the cold March mornings and sat in his car outside the school and watched the children arriving and thought about what it meant to be a person who taught young people about certainty — about proofs, about the satisfaction of arriving at an answer that was definitively correct — while being, himself, a man who had spent twelve years refusing to apply that standard to his own life. He thought about the specific dishonesty of this. He thought about Owen, who had trusted him — had trusted him with the marriage difficulties, with the drinking, had trusted him enough to confide, and then had looked up from a staircase and trusted him with the most fundamental request one person could make of another.</p>
+    <p>He thought about what Owen had actually said. Not the full sentence — he had been over the full sentence so many times it had become noise — but the two words at the centre of it. <em>Something's wrong.</em> Not <em>I'm in danger</em>, not <em>call an ambulance</em>, not even <em>help me</em>. Just <em>something's wrong</em> — an observation, not a demand. A person trying to make sense of what was happening to their body, reaching for another person in the dark because another person was there.</p>
+    <p>Daniel had been there. He had been there and he had looked at Owen's grey-white face and he had calculated, in the terrible clarity of those seconds, what helping would cost him. He had been involved, earlier that evening, in a conversation he should not have been involved in — a conversation that, if examined by the wrong people in the aftermath of a colleague's death, might have led to questions about other things, professional things, things that were not related to Owen but that would have been drawn into the same investigative light. He had made a risk assessment. He had looked at a dying man and performed a cost-benefit analysis.</p>
+    <p>This was the thing he had never found a way to say aloud. Not that he had frozen, not that he had panicked — those were human failures, understandable, even forgivable. What he had done was neither of those things. He had assessed the situation and made a choice, and the choice had been informed by self-interest, and he had then spent twelve years allowing the narrative of panic and freezing to fill the space in his own mind because it was a more survivable story.</p>
+    <p>On the fourth day, he sealed the letter.</p>
+    <p>He held it in both hands and felt its weight, which was the weight of a sheet of paper and nothing else, and also somehow the weight of twelve years and one man's life and whatever remained of his own. He set it on the table beside the glass, which was still clean and still empty. He thought about sending it. He thought about what happened after sending it — the responses, the process, the phone calls, Lena's voice changing.</p>
+    <p>He thought about Owen on the staircase. He thought about Owen in his dream, looking up.</p>
+    <p>He picked up the envelope. And here — exactly here, in this moment, with the envelope in his hands and the glass on the table and twelve years accumulated behind him like weather — is where the story becomes yours to direct.</p>`
+  ],
+  branchPoint: {
+    quandary: "Daniel has written the truth — and holds it in his hands. Does confession serve the dead, or only the confessor?",
+    context: "Owen cannot be brought back. Frances Calloway has rebuilt her life. Lena loves a father she has never fully known. The legal window for action has closed. Daniel's confession will cause pain — to Frances, to Lena, to Martin — without changing the material fact of Owen's death. And yet the letter exists. The question is not whether Daniel is guilty. He is. The question is whether guilt that is never spoken is ever truly carried — or whether silence is just another form of abandonment.",
+    choices: [
+      {
+        path: "Path A — The Reckoning",
+        title: "He sends the letter",
+        desc: "To confess is to make Owen's death witnessed at last — to restore to him the dignity of being a person whose dying was seen. It will cost Daniel everything. He sends it anyway.",
+        label: "a",
+        consequence: "The letter leaves his hands on a Wednesday morning, at the post box on the corner. He stands there for a moment after. The weight does not lift. But it changes — becomes distributed, shared, no longer only his. He walks home through cold air and does not know what comes next, only that he has finally stepped into the story instead of out of it."
+      },
+      {
+        path: "Path B — The Vigil",
+        title: "He burns the letter",
+        desc: "To speak is to make his guilt the center of other people's grief again. Frances does not need this. Lena does not need this. Some debts cannot be paid — they can only be carried with eyes open.",
+        label: "b",
+        consequence: "He burns the letter over the kitchen sink, watching it curl and blacken, and he makes a different kind of decision: he will live with this consciously, finally, without the comfort of narrative. He will carry it as weight rather than secret. He sets the glass on the windowsill where the morning light can reach it."
+      }
+    ]
+  }
+},
+
+// ─────────────────────────────────────────────────────────────────
+// CHAPTER TWO — PATH A (He sent the letter)
+// ─────────────────────────────────────────────────────────────────
+ch2a: {
+  label: "Chapter Two",
+  title: "The Things That Arrive",
+  epigraph: { text: "Truth is rarely pure and never simple.", credit: "Oscar Wilde" },
+  path: "a",
+  pages: [
+
+    `<p>The responses came in the order he had least expected.</p>
+    <p>First was the inquest authority — a letter, formal and procedural, acknowledging receipt of his statement and informing him that given the time elapsed and the closed nature of the case, the matter would be reviewed at the discretion of the senior coroner. The language was the language of institutions: careful, impersonal, designed to communicate without committing. He read it four times and understood that the legal dimension was, for the moment, suspended in bureaucratic amber, and that this was neither resolution nor its opposite.</p>
+    <p>Second was Lena. She had not heard from the inquest authority — he had not named her in the letter — but she had, apparently, heard it in his voice on their last call, the Sunday before. She arrived at his door on a Thursday afternoon without warning, in her coat and her university scarf, and stood in his doorway and looked at him with the expression of someone who has been running a hypothesis for a while and is now ready to test it.</p>
+    <p>"What did you do?" she said. Not accusatory. Clinical, almost — the voice of someone who has decided they want the truth and has cleared the space in themselves to receive it.</p>
+    <p>He told her. He told her at the kitchen table, with tea that neither of them drank, in a voice that was steadier than he expected — not because the steadiness was false but because he had said the words in his head so many times that they had worn grooves, and the grooves made the speaking easier even when the content was not. He told her about the staircase and Owen and the calculation and the twelve years. He did not minimize and he did not elaborate. He told it flat, the way you tell a fact.</p>
+    <p>Lena listened. She did not cry. She did not speak for a long time after he had finished, and the silence was not the silence of processing but the silence of someone deciding what kind of silence to be.</p>`,
+
+    `<p>"I don't know what to do with that," she said finally.</p>
+    <p>"You don't have to do anything with it."</p>
+    <p>"I know." She looked at him. "But I'm going to need some time."</p>
+    <p>She left. She hugged him at the door, briefly, the hug of someone who is not yet sure whether the person they are hugging is who they thought they were. He stood in the open doorway and watched her go down the stairs and felt the particular grief of a parent who has handed their child something terrible and true and must now wait to see whether the child can carry it.</p>
+    <p>The third response was from a solicitor. A letter, also formal, from a firm in Sheffield representing the interests of Frances Calloway, née Marsh, advising him that his communication had been received and that Mrs. Calloway wished to inform him that she had instructed her solicitor to review the matter thoroughly, and that in the meantime she did not wish to be contacted by him directly.</p>
+    <p>He had expected this. The existence of the solicitor confirmed that Frances had read the letter and had not, as he had briefly and shamefully hoped, simply decided to absorb it and do nothing. She was doing something. She was, entirely reasonably, mobilizing the available mechanisms for doing something. He could not begrudge her this. He had, after all, asked for it in the letter — had explicitly written that the information should be used however those affected saw fit.</p>
+    <p>He had meant it when he wrote it. He was trying to mean it now.</p>`,
+
+    `<p>Martin came over on a Sunday, unannounced, carrying wine he didn't open, and sat across from Daniel at the kitchen table with the glass between them — Daniel had left it there, as he always did now, like a fixture — and looked at Daniel with the specific expression of a man who has been thinking hard about something for several weeks.</p>
+    <p>"You told me twelve years ago that you were with someone all evening," Martin said. "At the retreat. You had an alibi. I was your alibi for part of it — I told the — " He stopped. "I told the inquiry I'd seen you."</p>
+    <p>"I know."</p>
+    <p>"I told them I'd seen you at ten-thirty. Going to bed."</p>
+    <p>"I know."</p>
+    <p>"You were there at eleven forty-seven."</p>
+    <p>"Yes."</p>
+    <p>Martin looked at the glass. He reached out and touched the rim of it with one finger, the way you touch something you are trying to understand. "Was any of it — was what you told me at the time — was any of it real?"</p>
+    <p>"The part that was real," Daniel said carefully, "was that I couldn't tell you. Everything else was — I built it so you wouldn't look further. I'm sorry. I know what I was doing."</p>
+    <p>"Yes," Martin said. "That's rather the problem."</p>
+    <p>He left an hour later without having opened the wine, and Daniel sat alone at the table and understood that this friendship, which he had valued above most things he possessed, had been damaged in a way that might or might not be repairable, and that whether or not it was repairable was not his decision. He had introduced something true into it for the first time. Whether the truth was compatible with what they had was now a question for Martin to answer.</p>`,
+
+    `<p>The glass filled with water on a Tuesday night — the first time in three weeks. He had begun to think of the glass as a finished thing, an artifact of a phase that was over; its presence in his kitchen had become companionable rather than threatening. So the water, appearing again in the small hours while he lay awake listening to the building breathe, was a surprise. He went to the kitchen. He stood over the glass and looked at the water.</p>
+    <p>"I sent the letter," he said aloud, which was the first time he had spoken to the glass directly and which felt, as he did it, both ridiculous and correct. "I told Lena. I told Martin. Frances has a solicitor. I don't know what happens next."</p>
+    <p>The glass did not respond. The glass was a glass.</p>
+    <p>He sat down at the table anyway and stayed there for a while in the way that you stay somewhere when you're not sure where else to be. He thought about Owen — not the staircase Owen, not the grey-white face, but the other Owen, the one who left bad notes about the coffee machine and told long jokes badly and once showed Daniel a photograph of his wife and said, with the completely unselfconscious sincerity of a man who had not yet learned to be ironical about love: <em>"Isn't she something?"</em></p>
+    <p>He had been something. Owen Marsh had been something. And Daniel had been there when his body had stopped being able to carry him, and had turned around, and had carried something else instead for twelve years.</p>
+    <p>He drank the water. It tasted like water.</p>`,
+
+    `<p>The legal process, when it moved, moved slowly and with the peculiar courtesy of systems that are technically obligated to take something seriously but are not quite sure how seriously. A coroner's officer contacted him by phone — a woman named Briggs, careful and professional, who asked him whether he would be willing to make a formal statement and indicated, without stating it explicitly, that the prospect of prosecution was limited given the elapsed time and the ambiguity of what his intervention might have achieved.</p>
+    <p>He said yes. He would make a statement. He drove to Sheffield on a grey Wednesday and sat in a room with Briggs and a colleague and said aloud, in front of a recorder, the things he had written in the letter. He said them the same way he had told Lena — flat, unelaborated, without the self-protective softening that the intervening weeks had occasionally suggested to him as an option. He was trying, in each of these iterations, to give the account that was most useful to everyone except himself.</p>
+    <p>Briggs thanked him. Her colleague thanked him. He drove home in the grey afternoon and felt very tired in the specific way of people who have done something correct and are discovering that correctness is not the same as relief.</p>`,
+
+    `<p>Lena called on a Saturday evening, six weeks after the kitchen table conversation. He answered immediately.</p>
+    <p>"I've been thinking," she said.</p>
+    <p>"I know. I've been waiting for it."</p>
+    <p>"I'm angry with you." She said it directly, the way she said most things — a quality he had always admired in her and now received with the full weight of its target. "I'm really angry with you. Not just about Owen. About all of it — the twelve years, the Sundays, letting me think I knew you."</p>
+    <p>"Yes."</p>
+    <p>"But." She paused. He waited. "But you did something that must have been — I can't imagine what it cost you. To send it. To let it all out. And I keep thinking about you sitting at that table for twelve years, carrying it, and I don't know whether to be angry or just —" She exhaled. "I don't know what I am. But I wanted you to know that I'm still here. I'm still your daughter. I'm figuring out what that means right now but I haven't gone anywhere."</p>
+    <p>He put his hand over his eyes. He sat very still. "Thank you," he said, which was inadequate, and "I love you," which was the truest thing he knew.</p>
+    <p>"I know," she said. "That's part of what makes it so complicated."</p>`,
+
+    `<p>He did not hear from Frances directly. He had not expected to, and the solicitor's letter had made the boundary clear. But in the seventh week, a second letter arrived from the solicitor — not hostile, not warm, occupying the precise temperature of a legal communication that has been written under the instructions of a client who is still deciding what she feels. The letter informed him that Mrs. Calloway had read his statement in full, that she had noted his acknowledgment that intervention might not have saved her husband, and that she wished him to understand one thing: she was not going to forgive him. She was not going to be asked to forgive him. What she was going to do was live with this information in the same way she had lived with all the other information of those twelve years, and she asked, in return, only that he do the same — live with it, without the resolution he might have hoped his letter would provide, without the absolution of her understanding.</p>
+    <p>He read the letter three times. He folded it and put it in the same drawer as the letter he had sent, and the brown paper wrapping of the package, and the string. He understood what Frances was offering him — not forgiveness but witness. She knew, now. He was known, now. That was not comfort, but it was something more honest than comfort.</p>`,
+
+    `<p>Martin came back. This was the thing Daniel had not allowed himself to count on, and it arrived in the form of a text message at nine in the morning on a Thursday: <em>Pub tonight? I have a lot of things to say and I think they should be said somewhere that sells beer.</em></p>
+    <p>They sat in a corner booth for three hours and Martin said the things he had been holding. He was angry. He said so. He said it specifically and at some length and Daniel received it with the gratitude of a person receiving something true that they deserve. Martin said that what hurt most was not the original event — he was working on some grudging contextual understanding of those few terrible seconds — but the subsequent twelve years of managed friendship, the feeling of having been a prop in Daniel's self-management programme.</p>
+    <p>Daniel said: "You were never a prop. You were the one person I let close enough for it to matter that I was lying to you. If that's not a form of trust I don't know what is, but I know it's not a sufficient one and I'm not asking you to find it sufficient."</p>
+    <p>Martin drank his beer and thought about this for a while. "That's either the most honest thing you've ever said to me or the most manipulative."</p>
+    <p>"It might be both."</p>
+    <p>"Yes," Martin said. "I think that's probably right." He finished his beer. "I'm not going anywhere. But I'm going to need you to be different, Dan. Not just about this. Actually different."</p>
+    <p>"I know," Daniel said. "I think I might be, a little. I'm not sure yet."</p>`,
+
+    `<p>The glass. He had thought, after the letter arrived from Frances's solicitor, that the glass would do something — fill, empty, move, confirm or deny. It did nothing. It sat on the kitchen table or the windowsill where he sometimes moved it for the light, and it was a glass. He had considered, more than once, throwing it away or burying it in the back of a cupboard. He did not do either of these things. He was not sure what he would be doing it for — for tidiness, for closure, for the symbolic comfort of disposing of an object that stood for something he was trying to dispose of.</p>
+    <p>He left it where it was. He thought this was probably correct — not as a gesture of penance or as a memorial, but simply because removing it would be another kind of management, another way of curating his own experience of the thing he had done, and he was trying, with mixed success but genuine effort, to stop doing that.</p>
+    <p>He went back to school in May. His students had been told he had been unwell. One of them — a sixteen-year-old named Priya, who had the particular quality of directness that some sixteen-year-olds have before the world instructs them out of it — looked at him on his first day back and said: "You look like something happened to you."</p>
+    <p>"Something did," he said.</p>
+    <p>"Are you okay?"</p>
+    <p>He thought about this. He thought about what okay meant, whether it was a state he had ever correctly occupied or simply a performance he had been good at. "I think I'm trying to be," he said. "I think trying is the part that matters."</p>
+    <p>She nodded, apparently satisfied, and opened her textbook. He turned to the board. He wrote a theorem. He began, for the first time in a long time, to teach.</p>`,
+
+    `<p>On a Saturday in June, he drove to Shropshire.</p>
+    <p>He had not planned this. He had, in fact, promised himself he would not do it — had told himself that Frances's letter constituted a boundary and that to cross it would be to make her grief about his need again. He drove anyway, which was perhaps its own kind of honesty, the honesty of doing the thing you know you're going to do rather than pretending it's a decision you haven't made.</p>
+    <p>He did not go to her house. He found the village church, which was the kind of small English village church that felt outside of time, and he sat in the churchyard in the afternoon light and looked at Owen's name on the headstone — a simple one, grey granite, with his dates and a line from something Daniel didn't recognize: <em>He was entirely here.</em></p>
+    <p>He sat there for a long time. He did not speak. He was not sure he had the right to speak, here, to this stone, to this name. He was not sure what he would say if he did — not sorry, because sorry was the wrong word, too small and too self-referential. He thought about the phrase on the stone. <em>Entirely here.</em> Owen, at the bottom of the stairs, had been entirely here. Had said something wrong was happening with a directness and simplicity that was, in retrospect, completely characteristic. He had been a person who was entirely where he was. Daniel had not been that kind of person. He was working on it.</p>
+    <p>He drove home in the early evening. On his kitchen table, the glass was clean and empty and full of the last light of the day. He sat with it for a while. He thought that this was what the rest of his life probably looked like — not resolution, not absolution, but the daily work of being present to the thing he had done, of being the kind of person who knew what he was and did not look away from it. It was not a comfortable life. It was, he thought, beginning to be an honest one.</p>`,
+
+    `<p>In August, Lena came to visit — a proper visit, two nights, with a bag and the comfortable rhythm of someone who is finding their way back to a place they are not sure is the same place they left. She cooked dinner on the Saturday, which she had always done when she visited, and they ate at the kitchen table with the glass between them and she looked at it and said: "Is that it?"</p>
+    <p>"That's it."</p>
+    <p>She examined it without touching it. "It's very plain."</p>
+    <p>"Yes."</p>
+    <p>"What are you going to do with it?"</p>
+    <p>He considered. "I think I'm going to keep it," he said. "Not as a punishment. I've tried punishment — it's just another way of making it about me. I think I'm going to keep it because it reminds me that there are things I can't undo, and that the appropriate response to that is not to undo myself, but to be different going forward. To actually be different." He looked at his daughter across the table. "I'm not sure I'm there yet. I think I might be getting somewhere close to the direction of it."</p>
+    <p>Lena looked at him for a moment. Then she reached across the table and touched the back of his hand — briefly, lightly, the touch of someone who is still deciding but has decided not to leave. "Okay," she said. "I think I can work with that."</p>
+    <p>Outside, the August light held on, the way it does in northern summers — reluctant, generous, making the most of the hours it had left. Daniel looked at his daughter's hand on his. He looked at the glass. He breathed.</p>
+    <p>He was, for the first time in a very long time, exactly where he was.</p>`
+  ],
+  branchPoint: {
+    quandary: "Daniel has been witnessed — by the law, by Lena, by Martin, by Frances's deliberate refusal to forgive. Is this enough? Or is there one more threshold he must cross?",
+    context: "Frances has told him she will not forgive him. Lena is returning, slowly. Martin is still there. The legal process found no grounds for prosecution. Daniel has done what the letter promised — he has told the truth, lived with its consequences, and is trying, with real effort, to be different. But Owen's wife is thirty miles away. She has not asked to meet him. He has not asked to meet her. The question of whether they should is not his to answer — and yet he keeps asking it.",
+    choices: [
+      {
+        path: "Path A — Continued",
+        title: "He writes to Frances one last time",
+        desc: "Not to seek forgiveness. Not to explain himself further. To ask, simply, if she would like to tell him who Owen was — so that someone besides her is carrying him forward with any accuracy.",
+        label: "a",
+        consequence: "He writes four sentences. He does not know if she will reply. He knows, as he seals this letter, that it is genuinely for her and not for him — the first thing he has done in twelve years that he can say that about with any confidence."
+      },
+      {
+        path: "Path A — Continued",
+        title: "He lets Frances have her silence",
+        desc: "She has told him what she needs. To push further is to make her grief a resource for his own healing. Some debts are honored by staying away.",
+        label: "b",
+        consequence: "He puts her address in a drawer and closes it. He goes for a walk in the August evening. He thinks about Owen — not what he did to Owen, but Owen himself, the person, the bad jokes, the coffee-machine notes. He holds him there, as carefully as he can, for as long as the light lasts."
+      }
+    ]
+  }
+},
+
+// ─────────────────────────────────────────────────────────────────
+// CHAPTER TWO — PATH B (He burned the letter)
+// ─────────────────────────────────────────────────────────────────
+ch2b: {
+  label: "Chapter Two",
+  title: "The Country of Silence",
+  epigraph: { text: "Not everything that is faced can be changed, but nothing can be changed until it is faced.", credit: "James Baldwin" },
+  path: "b",
+  pages: [
+
+    `<p>The ashes at the bottom of the sink were the colour of everything he had expected to feel and didn't. He ran water over them, watched them dissipate, and stood there in his dressing gown in the cold kitchen until the last grey residue had gone down the drain. Then he went to bed and slept, for the first time in weeks, through the night without dreaming of a staircase.</p>
+    <p>He thought, initially, that the sleep was the answer. That burning the letter had been a form of internal resolution — not self-deception, not the old management, but something more honest: an acknowledgment that some things could not be fixed by speech, that releasing them into the world would simply release harm, and that the more conscious form of carrying was the appropriate one. He had decided to carry it consciously. He had made it a deliberate choice rather than a default. This felt, in the first week, like a moral position rather than an avoidance.</p>
+    <p>In the second week, he was less sure.</p>
+    <p>The distinction he was trying to inhabit — between choosing silence as protection and choosing silence as cowardice — was very narrow, and he found that he could not stand in it comfortably for very long before it began to feel like the distinction was simply not the one he should be focusing on. He had thought, when he burned the letter, that he was protecting Frances from a pain she had not asked for. He was now wondering whether this was true, or whether he was protecting something else entirely — not Frances, not Lena, but the particular version of his own story in which he was a man who bore his guilt privately and nobly rather than a man who had avoided accountability twice.</p>`,
+
+    `<p>He placed the glass on the windowsill the morning after burning the letter, as though the act of placing it in the light was a small promise he was making to himself. Each morning he looked at it. He was trying to make the looking a practice — not penance, which he had decided was a kind of indulgence, but attention. The practice of attending to a thing without flinching from it.</p>
+    <p>It was harder than he had anticipated. Attention kept sliding into narrative, and narrative kept sliding into justification, and justification was the thing he was most practiced at and most needed to be suspicious of. He would look at the glass and think about Owen's face and then, before he had fully registered the thought, he would be three steps into an argument about why intervention might not have helped, why the legal window had closed, why Frances was better off not knowing, why disturbing the lives of people who had rebuilt themselves was its own form of violence — and then he would catch himself and understand that he had done it again, the oldest trick, the one he'd been running for twelve years: making the argument against action so sophisticated that it became indistinguishable from ethical reasoning.</p>
+    <p>He started a journal. Not to record anything confessional — he had enough confessional material, he did not need more of it on paper — but to track the arguments as they arrived, to write them down and look at them cold and ask, each time: <em>who does this argument serve?</em></p>`,
+
+    `<p>Martin noticed something had changed. He said so one evening at the pub, with the directness that was his particular gift — the quality Daniel had always valued and now received with the full weight of knowing how much he had misused it.</p>
+    <p>"You're different," Martin said. "You seem — more there. Is that the right way to put it? You're more in the room than you used to be."</p>
+    <p>"I'm trying something," Daniel said.</p>
+    <p>"What kind of something?"</p>
+    <p>"The kind where you stop pretending you're not carrying something." He looked at his glass — his pint, not the kitchen glass, which was not present but was always, in some sense, present. "I'm carrying something. I'm not going to tell you what it is. But I'm done carrying it like it's not there."</p>
+    <p>Martin looked at him for a moment. "You told me there was something, weeks ago."</p>
+    <p>"Yes."</p>
+    <p>"And you're still not going to tell me."</p>
+    <p>"Not yet. Maybe not ever. I'm still working out what the right thing is." He paused. "But I wanted you to know that I know there's a difference between keeping something private and using your privacy to keep people at a distance. I've been doing the second one for a long time. I'm trying to stop."</p>
+    <p>Martin considered this for what felt like a long time. Then he nodded, in the way of a man who is registering something without yet deciding what to do with it. "All right," he said. "I'll take that."</p>`,
+
+    `<p>The glass did not fill with water again after he burned the letter. Not once, in all the weeks that followed. He watched it every morning on the windowsill and every morning it was empty and clean and precisely itself — a glass, a tumbler, eight ounces and slightly thicker at the base, stripped of its discoloration ring and its scratches, a glass that had once held something and now didn't.</p>
+    <p>He thought about what the filling had meant. He had a few theories, all of which sounded, when he examined them, more like what he wanted them to mean than what they actually meant. He settled, eventually, on not trying to interpret it — on allowing it to be an event that had occurred, that had produced in him a particular confrontation with himself, and that was complete. The glass was now simply an object he had chosen to keep. What it kept being was his business.</p>
+    <p>He called Lena on Sundays, as always, and the calls were the same — Edinburgh, her coursework, her friends, a boy she was cautiously interested in — and he listened with his full attention in a way he was not sure he always had before. He found himself noticing things about her he might have previously catalogued rather than actually registered: the particular way she circled a topic before landing on it, the laugh that arrived slightly too late, the way she asked <em>does that make sense?</em> not because she doubted herself but because she wanted to know if she was being understood.</p>
+    <p>He was understanding her. He thought this might be new.</p>`,
+
+    `<p>He looked up Owen's wife.</p>
+    <p>He had told himself he wouldn't. He had told himself that burning the letter meant also burning the idea of intervention, that a choice for silence was a choice for complete silence, not selective silence. He looked her up anyway, at two in the morning when the prohibition was softer, when the rules he'd set for himself felt more like suggestions. Frances Calloway, formerly Marsh, in her house in Shropshire with the garden photographs and the second husband and the ten-year-old who moved in the photographs with the particular grace of a child who has not yet learned to be self-conscious.</p>
+    <p>She looked, in the way of people who have survived something that should have destroyed them, both completely ordinary and faintly extraordinary. There was a photograph of her standing in the garden with her arms out and her head back, laughing at something out of frame. She was wearing a blue coat. She looked like a person who had come all the way through something and arrived, improbably, at her own life.</p>
+    <p>He did not contact her. He had made that choice and he held it. But he looked at the photograph for a long time, and he thought about what she had built — without knowing what he knew, without the corrected record, without the letter that would tell her something that would make the blue coat and the garden and the outspread arms more complicated — and he tried to understand whether the thing she had built was, in some important way, dependent on not knowing. And he could not tell. He genuinely could not tell. And the not-being-able-to-tell was the thing he had to learn to live with, he thought, rather than resolving it in either direction.</p>`,
+
+    `<p>He found the journal useful. He had not expected this — he had thought of it as a tool for catching his own self-deceptions, a trap for bad reasoning, and it was that, but it was also a place where he could say the things that had nowhere else to go. He wrote about Owen directly for the first time in twelve years. Not about the staircase but about before the staircase — about the bad jokes and the coffee-machine notes and the photograph of Frances, and about a lunch they had once had in a pub near the office where Owen had talked for forty minutes about whether consciousness survived death and had arrived at no conclusion but had seemed invigorated by the inconclusiveness, as though thinking hard about an unanswerable question was itself a form of answer.</p>
+    <p>He wrote about what it had been like to know Owen in the ordinary way — not the tragic version of Owen, not Owen as the hinge of his guilt, but Owen as a person who existed in the daily texture of things, who was sometimes irritating and occasionally unexpectedly wise and always, as the stone in Shropshire said, entirely here.</p>
+    <p>He had not been to the stone. He did not think he had the right. But he had thought about it, late at night, and what he found when he thought about it was that what he wanted there was not absolution but simply to acknowledge that Owen Marsh had been a real person, had been worth being there for, and that Daniel had known this and had chosen otherwise. The writing in the journal was, perhaps, the closest he could come to that acknowledgment without trespassing on a grief that was not his.</p>`,
+
+    `<p>He changed things. Quietly, without announcement — not as performance but because the journal had shown him how much of his daily life had been structured around the management of interior space, around keeping the thing from surfacing, and now that the thing was consciously surfaced there was a great deal of room suddenly available for other arrangements.</p>
+    <p>He started going to a grief group. Not for Owen — he was not entitled to grieve Owen, he understood this — but because he was, he recognised, grieving something: the version of himself that might have existed had he turned around on that landing, the relationship with his daughter that had been conducted at one remove, the friendship with Martin that had been half-built on managed information. He sat in the circle in the community centre on Tuesday evenings and listened to other people's losses and did not speak for the first three sessions. When he did speak he said only that he was carrying a loss that he couldn't fully describe, and that he was trying to carry it more honestly. No one pressed him. The group had, as such groups do, a collective intelligence about what was and wasn't ready to be spoken.</p>
+    <p>It helped. This surprised him.</p>`,
+
+    `<p>Lena came to visit in May. She arrived with a bag and her usual comfortable efficiency at occupying his space, and on the first evening she looked at the glass on the windowsill and said: "You've still got that."</p>
+    <p>"Yes."</p>
+    <p>"Did something happen? You seemed — different, on the phone. Clearer, sort of."</p>
+    <p>"Something happened," he said. "Nothing I can fully explain. But I made a decision about something and I think the decision was right, and I think I've been trying to live into it since."</p>
+    <p>She looked at him with the evaluating look she had, the one that had always made him aware of how carefully she paid attention. "You're not going to tell me what it was."</p>
+    <p>"Not yet. One day I might. I'm still figuring out whether telling you serves you or just — unburdens me."</p>
+    <p>She was quiet for a moment. Then: "I think," she said slowly, "that you have always been a more careful person than I knew. I didn't know you were being careful. I thought you were just — reserved."</p>
+    <p>"I was careful in the wrong ways," he said. "I'm trying to be careful in better ones."</p>
+    <p>She nodded, slowly. "Okay," she said. "I think I can see that."</p>`,
+
+    `<p>The question that the burning had not resolved was this: had he made a choice, or had he made the same choice again?</p>
+    <p>He sat with this for months. He turned it in the journal at odd hours, trying to find its shape. There was, he understood, a version of his decision to burn the letter that was genuinely ethical — that was about protecting Frances from a retraumatisation she had not asked for, that was about understanding the limits of his own right to impose truth on people who had not requested it. And there was a version that was simply the twelfth iteration of the same self-preservation he had been performing since the landing.</p>
+    <p>What he could not determine — and what he had come to believe he might never be able to fully determine — was which version was his version. The arguments for each were available to him in roughly equal measure. He was a man who was good at arguments. He had made the case for silence before, very successfully, and he had believed it then, and he had been wrong. He was making the case for a different kind of silence now, and he believed it now, and he was not sure whether his believing something was any kind of evidence about whether it was true.</p>
+    <p>This was the particular form of hell available to people of sufficient self-awareness: you could see your own self-deceptions clearly enough to list them, but not clearly enough to be certain you weren't currently inside one.</p>`,
+
+    `<p>He went to Shropshire in September. He told himself he wasn't going to approach the house, and he didn't. He drove to the village, parked in the car park of the village pub, and walked to the church. He sat in the churchyard in the grey autumn light and found Owen's stone — the simple grey granite, the dates, the line he had thought about for months: <em>He was entirely here.</em></p>
+    <p>He sat there for an hour. He did not speak. He thought about Owen with all the accuracy he could muster — not the tragedy of Owen, not the staircase Owen, but the actual person, assembled from memory with as much fidelity as twelve years of guilt had allowed to survive. He thought about the lunch and the consciousness conversation. He thought about the photograph of Frances in her blue coat. He thought about the ten-year-old in her garden, who would grow up not knowing something, which was a loss of a particular kind, and about Frances herself, who would go on not knowing something, which was a different kind of loss, and about whether what he was denying them was more valuable than what he was denying them to protect.</p>
+    <p>He did not arrive at an answer. He had stopped expecting to arrive at answers. What he arrived at, sitting in the churchyard in September, was something closer to honest uncertainty — the acknowledgment that he did not know, that the not-knowing was real and not performed, and that carrying a genuine uncertainty was perhaps the most truthful thing available to him now.</p>
+    <p>He drove home through the Shropshire countryside as the light failed. The glass was on the windowsill when he got back, catching the last of the evening, empty and patient as it always was. He made tea. He sat at his kitchen table. He thought about Owen, and about what it meant to hold a person in memory without the right to speak about them, to carry them silently through a life they were absent from, to be changed by them without being able to say, to anyone, what had changed you.</p>
+    <p>He thought this might be the form his grief had to take. Not resolution. Not confession. But the long, daily work of being a man who knows what he is and does not let that knowledge make him smaller. Who carries the weight of a true thing, consciously, without setting it down and without using it as the whole of his identity.</p>
+    <p>He looked at the glass in the windowlight.</p>
+    <p>He thought: <em>I was there. I know what I did. I have not found a way to undo it. I am trying, every day, to do something else instead.</em></p>
+    <p>This was not forgiveness. This was not absolution. It was, he thought, as close as he was going to get to being honest in the situation he had made for himself. And it would have to be enough, because it was what he had.</p>`
+  ],
+  branchPoint: {
+    quandary: "After months of conscious silence, a letter arrives — from Frances Calloway, not through a solicitor. She has found him somehow. She is asking to meet. Does he owe her a truth he decided, for her sake, not to give?",
+    context: "He chose silence to protect Frances from pain. Now Frances herself is reaching out — something has shifted in her life, some question has reopened. She doesn't know what Daniel knows. She may be reaching out for entirely unrelated reasons. But he holds something that belongs, in some sense, to her story. His silence was a decision about what she needed. She is now telling him, by reaching out, what she wants.",
+    choices: [
+      {
+        path: "Path B — Continued",
+        title: "He meets her — and tells her",
+        desc: "His reasoning for silence was: she didn't need this. She has now told him, by seeking him out, that she is ready for something. He was not the right person to decide what she needed. She is.",
+        label: "a",
+        consequence: "He writes back: yes. He will come. He does not know what he will say or whether it will help her or harm her. He knows only that the choice is no longer his to make alone, and that this — finally — is the correct distribution of the decision."
+      },
+      {
+        path: "Path B — Continued",
+        title: "He meets her — but does not tell her",
+        desc: "She is reaching out for her own reasons. He can be present without making her visit about his confession. He can meet her as a person, listen to her, give her whatever she came for — without using her arrival as his permission slip to unburden himself.",
+        label: "b",
+        consequence: "He writes back: yes. He will come. He will listen to what she came to say. And he will carry his own thing, as he has been carrying it — consciously, with both eyes open. She does not have to receive it to make his carrying real."
+      }
+    ]
+  }
+},
+
+// ─────────────────────────────────────────────────────────────────
+// CHAPTER THREE — PATH A→A (Sent letter → Writes to Frances)
+// ─────────────────────────────────────────────────────────────────
+ch3aa: {
+  label: "Chapter Three",
+  title: "What the Living Carry",
+  epigraph: { text: "I am not afraid of storms, for I am learning how to sail my ship.", credit: "Louisa May Alcott" },
+  path: "a",
+  ending: "a",
+  pages: [
+
+    `<p>Frances Calloway replied to his four sentences in eight weeks, which he interpreted, in the way of a man who has become careful about his own interpretations, not as evidence of ambivalence but simply as the pace at which a person in her position might reasonably move. Her reply was handwritten. He noticed this — the handwriting of a person he had never met, deliberate and legible, the handwriting of someone who had learned it as a discipline rather than an accident. She wrote: <em>I am not going to make this easy for you. But I would like to know what he was like to you. I'm not sure I knew everyone he was.</em></p>
+    <p>He read this four times. He read it four more times over the course of an evening. He was struck by the specificity of the request — not forgiveness, not confrontation, not even understanding, but a particular form of information: who Owen had been to another person. She was building something, or tending to something, and she needed material he happened to have. The terms were precise and impersonal, and he found them, for that reason, easier to meet than warmth would have been.</p>
+    <p>He wrote back. He wrote at length. He told her about the bad jokes, the coffee-machine notes, the lunch where Owen had talked about consciousness for forty minutes with the gleeful inconclusive-ness of a man who loved the question more than any answer. He told her about the birthday card with the anatomically improbable calculator. He told her about the day Owen had shown him her photograph and said <em>Isn't she something?</em> with the completely unironic tenderness of a man who had not yet learned to be embarrassed by love.</p>
+    <p>He did not include himself in these stories more than the stories required. He was trying, as he had been trying since the first letter, to keep his own presence in Owen's narrative to its accurate minimum.</p>`,
+
+    `<p>She wrote again. Three weeks this time. She told him something he had not known — that Owen had talked about Daniel, specifically, as "the one person at work he could stand to be honest with," a phrase that arrived in Daniel's kitchen and sat there for several days radiating a complicated light. He had been, apparently, the person Owen trusted. He had been trusted by the person he had failed to trust. He held this without trying to make it mean something clean.</p>
+    <p>She told him also that she had spoken to the coroner's officer. That she understood, now, the full sequence of what had happened on the staircase. She did not describe how she felt about this. She described what she had done with it — had sat in her garden for a long time, had told her husband, had gone for a walk that took three hours, had returned and made dinner and put her son to bed and lain awake until four in the morning, and had then, apparently, decided to write to Daniel, which was what the eight-week letter had been. She did not explain why she had decided to write after lying awake until four in the morning rather than at some other moment. He thought the not-explaining was its own explanation.</p>
+    <p>"I don't know what I expected from you," she wrote. "Probably something more obviously terrible. You are — more ordinary than that. I mean this as an observation rather than a judgement. The ordinariness is almost harder, I think."</p>`,
+
+    `<p>They did not meet. He had offered, in his second letter, tentatively, with all the appropriate qualifications about her right to decline — and she had said no, not yet, that she was not ready to be in the same room as him and was not sure she ever would be, and that she hoped he could respect this. He could. He did. He understood that the correspondence had its own value precisely because it wasn't a meeting — it was a transaction at a distance that allowed them each to calibrate how much of the other they could receive without the physical reality of a person in front of them complicating it.</p>
+    <p>He had Lena over for the weekend in late September, and on the Saturday morning he told her about the correspondence. He did not read her the letters — they were not his to share — but he described what was happening: that he had written to Owen's widow, that she had written back, that they were — he struggled for the word — corresponding, in the old sense, exchanging something true across a distance.</p>
+    <p>Lena listened. She sat across from him at the kitchen table with the glass between them, and he watched her process it in the way she processed things — going still, looking at a middle distance, returning. "She's talking to you?" Lena said. "After what you told her?"</p>
+    <p>"She's not forgiving me. She made that clear. But she — she wanted to know who Owen was to other people. I had something she needed."</p>
+    <p>"And do you think it's helping her?"</p>
+    <p>He thought about this carefully. "I think it's helping her know something true. Whether that's the same as helping, I don't know. She's the only one who can answer that."</p>`,
+
+    `<p>Martin read his statement — Daniel sent it to him, finally, after months of describing the shape of something without naming it. He sent Martin the statement he had given the coroner's officer, which was the plainest version of the event he had, the one stripped of justification and self-commentary. Martin phoned him the same evening.</p>
+    <p>"I've read it," Martin said.</p>
+    <p>"Yes."</p>
+    <p>"I'm not going to do the thing where I tell you how I feel about it. I need some time for that."</p>
+    <p>"Of course."</p>
+    <p>"But I want to ask you something. And I want you to understand that I'm asking it as a genuine question, not as a — not as a way of getting at you." He paused. "Did you think, when you were standing there, about me? About any of us? Or was it entirely about what it would cost you?"</p>
+    <p>Daniel thought about this for a long time — long enough that Martin said his name, checking if he was still there. "Entirely about what it would cost me," Daniel said. "I've thought about other things since. But in those seconds — entirely me."</p>
+    <p>Martin was quiet. "Okay," he said. "Thank you for telling me that."</p>
+    <p>"I'm sorry, Martin."</p>
+    <p>"I know," Martin said. "I'll call you in a few days."</p>
+    <p>He did call. Five days later, on a Thursday evening. They talked for two hours about things only partly related to any of this, and it was not easy, and it was not the same friendship it had been, but it was something — some beginning of a different friendship, less comfortable and more honest, built on ground that had been cleared.</p>`,
+
+    `<p>Frances wrote again in November. Shorter this time, and in a different register — not warm, but less formal, the slight shift in pitch that marks a correspondence that has passed some threshold of its own. She told him something he had not expected: that she was glad he had written, even though she had not, at the time of receiving his first letter, believed she would be glad of anything he did. She was not revising her position on forgiveness. She was noting that the correspondence had given her something she could not have anticipated wanting — a different texture of Owen. More Owen. She did not have to be grateful to Daniel for this, she noted, since it was the very minimum he owed, but she was noting it for what it was.</p>
+    <p>He wrote back. He said: <em>I'm glad he had you. He showed me your photograph once and said you were something. He was right.</em></p>
+    <p>She did not reply to this. He did not expect her to. He thought the not-replying might have been its own reply — that she had received it and put it somewhere and that was the end of what it needed to do.</p>`,
+
+    `<p>The glass. He had been thinking about what to do with it for months, and the thinking had mostly taken the form of deciding not to decide, which was a form of decision he was trying to be more conscious about. In November, coming back from a walk in the first real cold of the year, he came into his kitchen and saw the glass on the windowsill in the last afternoon light and knew, with the clarity of someone who has been waiting for something to become clear, what he wanted to do.</p>
+    <p>He wrapped it carefully in the brown paper it had arrived in — he had kept the paper, as he had kept the string — and he tied it with the string, which he had also kept, in the way of a man who keeps things he is not sure what to do with. He wrote a letter, shorter than all the others, which said only: <em>He left this behind. I thought you should have it back.</em></p>
+    <p>He packaged it and addressed it to Frances Calloway in Shropshire and took it to the post box on the corner. He stood at the post box the same way he had stood at the post box in March, with something in his hands that was about to leave his hands. The weight this time was different — not lighter, but more accurately distributed. He was not relieving himself of anything. He was returning something to the person it belonged to.</p>
+    <p>He posted it. He walked home. He made tea and stood in his kitchen and looked at the space on the windowsill where the glass had been, and the space was just a space, which was both a relief and its own small loss.</p>`,
+
+    `<p>Christmas. Lena came, and this time she came for five days — longer than usual, the length of stay of someone who has decided a place is worth staying in. They cooked together on Christmas morning, which they had not done since before the divorce, and the kitchen was full of something Daniel could only identify by contrast with what it had previously been: it was full of presence. His presence, her presence. Nothing managed. Nothing behind glass.</p>
+    <p>She said, on Christmas afternoon, with the particular timing of someone who has been holding a thing for a while and has decided now is when to put it down: "I've been thinking about what you said. That whatever you did, you were doing it because it was right. That it might make you look different to me."</p>
+    <p>"Yes."</p>
+    <p>"You look different to me." She said it without accusation, as a statement of fact. "But not — not worse. More real. Like I can see the actual shape of you now, rather than the shape you were presenting."</p>
+    <p>"The shape I was presenting was a good shape," he said.</p>
+    <p>"It was a manageable shape," she said. "Which is different."</p>
+    <p>He thought about this. He thought about the twelve years of good shapes, the careful maintenance of the manageable. He thought about Owen, who had been, as the stone said, entirely here — who had had no particular gift for manageability and had apparently not considered it a priority. He thought about what it cost to be entirely here, and about what it cost not to be.</p>
+    <p>"You're right," he said. "You're entirely right."</p>`,
+
+    `<p>Frances replied to the package. He had not expected a reply, had told himself the package was the end of the correspondence, a period at the end of a sentence, and her reply was therefore both surprising and, retrospectively, inevitable — the way things that were always going to happen feel inevitable once they have.</p>
+    <p>She wrote: <em>I know this glass. He liked plain things. He always said the value of an object was in its use and not its appearance, which drove me mad because I liked beautiful things. I used to buy him beautiful objects and he would use them until they were plain. This glass — yes. I know this glass.</em></p>
+    <p>And then, a line below, separately, as though it had been added after the rest: <em>Thank you for sending it. I'm still very angry. I wanted you to know both things.</em></p>
+    <p>He read this letter for a long time. He read it the way you read something that is going to stay with you — absorbing it slowly, letting it settle. He understood that he was being given something precise: not forgiveness, not absolution, not even understanding — but the simultaneous reality of her anger and her gratitude, held at once, undissolved. She was not simplifying her feelings for his benefit. She was trusting him with their full complexity. He was not sure he deserved this trust. He was sure he intended to do his best to honour it.</p>`,
+
+    `<p>He found, in the new year, that he was different in small ways he had not anticipated. He had expected the aftermath of confession to feel primarily like loss — of reputation, of the version of himself that certain people had held. And there was loss. But there was also something he had not budgeted for, which was the relief of consistency. The relief of being the same person in all the rooms he entered, of not having to manage the borders between the version of himself he showed to Martin and the version he showed to Lena, of not having the permanent low-level computational overhead of keeping things separate. He had not understood, until the overhead was gone, how much of his energy it had consumed.</p>
+    <p>He was tired in a new way — not the tired of concealment but the ordinary tired of a person who is living in the open. It felt, surprisingly, like rest.</p>
+    <p>He thought about Owen in the context of this tiredness. He thought about Owen talking about consciousness — whether it survived death, what it would mean if it did, what it would mean if it didn't — and he thought that whatever Owen's consciousness was or was not doing now, Owen the person had lived with a kind of directness that Daniel had always admired without quite understanding. Now, perhaps, he was beginning to understand it. The directness had not been ease. Owen had been a person with difficulties — the marriage, the drinking — but he had been a person whose difficulties were visible, who had not constructed an architecture around them, who had apparently trusted that being seen in difficulty was less dangerous than being unseen.</p>
+    <p>He had been wrong about that, in the end. Being seen had not saved him. But Daniel thought there was still something in it — that the being-seen was its own value, independent of what it could or couldn't prevent.</p>`,
+
+    `<p>In February, Frances wrote again — the shortest letter yet, almost a note. She said that her son had asked her, recently, about his father. About what he had been like. She had told him about the coffee-machine notes, which made her son laugh, and about the photograph and the thing he had said about her — <em>Isn't she something?</em> — and her son had said: <em>He sounds nice, Mum.</em></p>
+    <p>She wrote: <em>I thought you'd want to know that he gets to be nice to his son. Whatever you gave me — even if you had no right to take what you took — what you gave me of him is now somewhere it was supposed to be. I thought you should know that.</em></p>
+    <p>He sat with this letter for a long time. He did not try to make it into absolution — she had been clear, repeatedly, that it was not that. But he tried to understand what it was. It was a witnessing. She had seen what the correspondence had produced and had told him about it so that he could carry it — not as comfort, exactly, but as fact. Owen, filtered imperfectly through Daniel, had reached Owen's son. It was indirect and contaminated and the contamination was entirely Daniel's fault. And it was also real.</p>
+    <p>He folded the letter. He put it in the drawer with the others, with the brown paper and the string, with the document he had given the coroner's officer. He went to the kitchen and stood at the windowsill where the glass had been and looked at the space for a moment, and then he made tea and sat at the table and thought about Owen with something that was not guilt and not grief but something adjacent to both — a specific, permanent, bearable tenderness for a person who had been entirely here and who was, through all these imperfect channels, still slightly, still partially, still incompletely — here.</p>`
+  ]
+},
+
+// ─────────────────────────────────────────────────────────────────
+// CHAPTER THREE — PATH A→B (Sent letter → Let Frances have silence)
+// ─────────────────────────────────────────────────────────────────
+ch3ab: {
+  label: "Chapter Three",
+  title: "The Long Perimeter",
+  epigraph: { text: "Some losses are not to be repaired. They are to be inhabited.", credit: "Attributed to no one in particular" },
+  path: "a",
+  ending: "b",
+  pages: [
+
+    `<p>He put her address in a drawer and closed it, and this was a smaller act than burning the letter had been, but it was made of the same material: the decision that some things were not his to disturb. Frances Calloway had built a life that worked. He had placed his truth into the record — the coroner's officer had it, Lena had it, Martin had it — and he had let Frances have what she had asked for, which was the knowledge of what had happened without the further complication of Daniel's continued presence in its aftermath.</p>
+    <p>He was surprised to find that this felt less like sacrifice than he had expected. He had prepared himself for the familiar pull of the unfinished — the sense that something left undone would continue to make itself felt in the way unfinished things did, the way the glass had made itself felt for weeks before he opened it. But the drawer stayed quiet. He checked it sometimes, in the first months, with the wariness of someone expecting an ambush. The drawer was just a drawer.</p>
+    <p>He thought this might mean he had made the right choice, and then he caught himself thinking this and recognised the structure of the thought — the way it was trying to use his comfort as evidence of his correctness — and he set it aside. His comfort was not evidence of anything except that he was a person who could make peace with his own decisions. He had always been able to do that. It was, in fact, his oldest and most dangerous skill.</p>`,
+
+    `<p>He occupied himself with the living. Lena, Martin, the school — the texture of the life he had, which was not the life he might have had but was nonetheless a life, populated by people who were now in varying states of knowing him more fully than they had before. He found that being known more fully was both better and harder than being known partially. Better for obvious reasons. Harder because the people who knew more of him now made more demands of him — not consciously, not coercively, but in the way that real intimacy creates real claims. Martin expected honesty now in a way he had not before, and the expectation was appropriate, and meeting it required a kind of daily practice that the previous version of Daniel had not been exercising.</p>
+    <p>He was, he thought, learning something basic about what it cost to be known. He had always understood it as a risk — the risk of being seen badly, of being judged, of losing the controlled image. What he had not understood, because he had never stayed long enough in genuine transparency to discover it, was that being known also cost effort in the ongoing sense. You could not simply reveal yourself once and then return to the maintenance of the revelation. Being known was not a state but a practice.</p>
+    <p>He was practising.</p>`,
+
+    `<p>Martin came over one evening in April with wine he actually opened this time, and they sat at the kitchen table — the glass was on the windowsill, as it had been since the letter-burning — and talked in the way that people talk when they are rebuilding something and are trying to be careful about the load-bearing elements. Martin asked him about Owen. Not about the staircase — he had the coroner's statement for that — but about Owen the person, who he had been, what Daniel had thought of him.</p>
+    <p>Daniel talked about Owen for the first time since the inquest. He talked about the bad jokes and the coffee-machine notes. He talked about the lunch and the consciousness conversation. He talked about the birthday card. He talked about the afternoon Owen had shown him the photograph and said <em>Isn't she something?</em> — and as he said it he was aware of the picture this made: a man who had been trusted and who had not been trustworthy, receiving the photograph of a woman whose life he would later fail to protect her husband into.</p>
+    <p>"He sounds like a real person," Martin said.</p>
+    <p>"He was a very real person," Daniel said. "That was, I think, the thing I most needed to be unable to use as a reason. He was entirely real and I still didn't — " He stopped. "I think I needed him to be somehow less real. But he wasn't. So whatever I was protecting in those seconds, it wasn't because I had managed to make him less real to me. It was in spite of him being real."</p>
+    <p>Martin was quiet. "I didn't know that was what you were telling yourself."</p>
+    <p>"I wasn't telling myself anything," Daniel said. "That's rather the point."</p>`,
+
+    `<p>He did not contact Frances. He honoured what she had asked for, completely and without the private reservation of <em>unless she changes her mind,</em> because placing conditions on her silence was itself a form of encroachment. He left her alone. He thought about her sometimes — the blue coat, the garden, the outspread arms — not with guilt or longing but with something more neutral: a kind of careful respect for a person who had survived something and had built well from the surviving.</p>
+    <p>He wondered, occasionally, whether she thought about him. He suspected not — suspected that she had received his letter, processed it through her solicitor, and had then done what people who have survived loss learn to do, which is to put the new terrible thing in the same place as the old terrible things and continue. He did not need her to be thinking about him. He did not need to be in her life. He had made his correction to the record. The record existed. Whatever Frances did with it was hers.</p>
+    <p>He found, over time, that the shape of his guilt was changing. Not diminishing — that was not the right word, and he was suspicious of words like diminishing, words that suggested some kind of erosion, some softening that he had not earned. But changing. Becoming less like a thing that lived in the chest and compressed the breathing and more like a thing that was simply known — the way you know a scar, the way you know a crooked finger that healed wrong. Still there. Part of the body. Not separate from the person you are now but integrated into them, which was uncomfortable in a different way than the separateness had been, but was at least honest.</p>`,
+
+    `<p>Lena came in June. She brought, along with her bag and her Edinburgh scarf, a new quality of ease that he noticed as soon as she came through the door — a slight unlacing, a willingness to be less careful. He understood that this was what he had given her, obliquely, by being less careful himself: permission to occupy the same space without managing their distance.</p>
+    <p>They walked along the river on the Saturday afternoon, the first warm day of the year, and she told him about a case study she was working on — something about an environmental company that had withheld data about contamination for years, afraid of the legal and financial consequences, while the contamination quietly continued. She was describing it academically, as a case study, but he felt the resonance of it the way you feel weather approaching — that particular shift in pressure.</p>
+    <p>"The thing I find most interesting," she said, "is that when they finally disclosed — when they were caught, basically — they said that they had believed, throughout, that they were protecting the community. That if they disclosed and the plant closed, people would lose jobs, the local economy would suffer. And I think they probably believed it. I don't think it was entirely cynical."</p>
+    <p>"But," Daniel said.</p>
+    <p>"But the community they were protecting didn't get to decide whether that protection was worth the cost. They were being protected from a choice they hadn't been given."</p>
+    <p>He walked beside her and said nothing for a moment. The river was very still. "Yes," he said finally. "I think that's right."</p>
+    <p>She looked at him. She did not say anything else about it. She didn't need to.</p>`,
+
+    `<p>He went back to the school in the autumn with a quality of attention he had not had before, or perhaps had had and had not directed at the right things. He looked at his students — the sixteen-year-olds with their various burdens and performances and genuine curiosities — and tried to teach them mathematics in a way that was honest about what mathematics was: not certainty but rigour. Not perfect truth but disciplined thinking. He was, he told a class one afternoon, attempting to give them better tools for being wrong — which was confusing to them, because they had been told mathematics was about being right, and he had to explain that being right was the goal and not being wrong was the practice, and that the practice was what made the occasional rightness worth anything.</p>
+    <p>He thought he might be saying this to himself as much as to them. He allowed this. The best teaching he had received had always been from people who were also talking to themselves.</p>`,
+
+    `<p>The glass remained on the windowsill. He had thought, more than once, that he would move it — would put it in a cupboard, would give it to a charity shop, would find some way to integrate it into the ordinary objects of his life so that it ceased to be a significant object and became just a tumbler in a kitchen. He did not do any of these things. He left it where the morning light could reach it and found, over months, that it had become neither significant nor insignificant but simply present — the way certain things are present when you have lived with them long enough, the way they become part of the rhythm of a day without becoming its meaning.</p>
+    <p>He had stopped trying to interpret it. He had learned, imperfectly and with ongoing backsliding, to hold some things as things rather than as signs — to let them exist without pressing them for significance. This was, he thought, one of the actual lessons of what had happened to him, though he was careful not to convert it too readily into a lesson, because the conversion of suffering into lessons was another form of management, another way of making something useful that was primarily supposed to be true.</p>`,
+
+    `<p>In late October he wrote a letter — not to Frances, whose silence he was honouring, and not to the inquest authority, which had all it needed — but to himself. He wrote it in the journal and addressed it to himself as he had been twelve years ago, standing on the landing with the grey-white face looking up at him from the stairs below, and he said the things that had not been sayable then and that were barely sayable now: that he had been a man who believed, in those seconds, that his own future was a thing worth protecting at the cost of another person's, and that this belief was the most ordinary and terrible belief a person could hold, and that the ordinariness of it did not make it smaller, only more common, and that common did not mean inevitable.</p>
+    <p>He wrote: <em>You could have gone down the stairs. You know this. You have always known this. The fact that you didn't is not because you didn't know. It is because you chose. And the choosing is the thing you have to live with, not the outcome, which might or might not have been different. You have to live with being the person who chose, in those seconds, in that particular way. This is what you are carrying. Carry it correctly.</em></p>
+    <p>He closed the journal. He sat at the table in the October dark, with the glass on the windowsill catching the streetlight from below, and he thought about what it meant to carry something correctly. He was not sure he knew. He was not sure there was a manual for it. He thought it probably meant something like: without pretending it isn't there, without making it the only thing that's there, without converting it into a story about yourself that you can live inside comfortably. Carrying it correctly probably meant keeping it in contact with reality — with Owen's reality, with Frances's reality, with the reality of the staircase and the grey-white face and the calculation that had been made — and not letting the contact wear grooves that became too comfortable to step out of.</p>`,
+
+    `<p>Martin, at Christmas, said something that Daniel thought about for a long time afterward. They were at Martin's house, which was warm and loud and full of family, and Daniel was in the kitchen helping with something and Martin was beside him and they were talking about nothing in particular, and Martin said, out of what seemed like nowhere: "I think you're better than you were. I want you to know I think that."</p>
+    <p>Daniel was quiet for a moment. "I'm not sure better is the right word."</p>
+    <p>"What's the right word?"</p>
+    <p>"Present, maybe. More present than I was."</p>
+    <p>"Is that not better?"</p>
+    <p>"It might be," Daniel said. "But I want to be careful about using it as a word for what I am now, because there's a version of that where being present gets to redeem what I did, and I don't think it does. I think they're separate. I can be more present now and have done what I did then, and those two things can both be true without the second one making the first one worse or the first one making the second one better."</p>
+    <p>Martin looked at him for a moment. "You think about this a lot."</p>
+    <p>"Every day."</p>
+    <p>"Is that — all right?"</p>
+    <p>"Yes," Daniel said, and meant it. "I think it's supposed to be. I think the thinking-about-it-every-day is the appropriate response. I'm not sure it ever becomes something else."</p>
+    <p>Martin handed him something to carry into the dining room. The house was warm. The children were loud. Daniel carried what he was given, and sat at the table, and was present — as fully as he knew how, which was more than before, which was not everything but was something.</p>`,
+
+    `<p>He did not hear from Frances. He had not expected to, and the not-hearing was clean — not an absence that pressed on him but simply a reality he had agreed to. She was living in Shropshire with her garden and her blue coat and her son who was growing up. She was carrying what she was carrying, and he was carrying what he was carrying, and they were not in contact, and this was what they had each decided.</p>
+    <p>He thought about her, sometimes, with the careful respect he had been trying to maintain — not as a person he owed something to, not as a person who could absolve him of something, but simply as a person who existed and who had been changed by the same event that had changed him, from a completely different angle. He thought about the strangeness of that — how two people could be permanently altered by the same thirty seconds on a staircase and never meet, never speak, never have occasion to acknowledge to each other that they had been in the same story. Owen had been the story. They were just what it had done to the people nearby.</p>
+    <p>In February, he drove to Shropshire alone. He did not go near Frances's house. He went to the church, to the simple grey headstone, and sat in the winter churchyard and looked at <em>He was entirely here</em> until the phrase stopped being words and became something more like a fact, a geological fact, the fact of a specific human life that had been real and had been ended and that the world had continued after, indifferently, as it does.</p>
+    <p>He stayed until the cold became too much. He drove home through the late afternoon. The glass was on the windowsill when he got back, and the February light was flat and clear and reached it fully, and it held the light the way an empty glass holds light — beautifully, without choosing to, without any particular intention, as a simple consequence of what it was made of.</p>
+    <p>He stood at the window and held it — not the glass but the view, the quality of the light, the fact of the day — and he thought about Owen, who had been entirely here, and about himself, who was trying to be, and about the distance between those two things, which was not nothing but was not, perhaps, as vast as it had once seemed.</p>
+    <p>He set the glass back on the windowsill. He turned on the kitchen light against the failing afternoon. He put the kettle on. He was here — imperfectly, partially, with the full weight of what he had done making him exactly the shape that he was. He was here. He intended to stay.</p>`
+  ]
+},
+
+// ─────────────────────────────────────────────────────────────────
+// CHAPTER THREE — PATH B→A (Burned letter → Meets Frances, tells her)
+// ─────────────────────────────────────────────────────────────────
+ch3ba: {
+  label: "Chapter Three",
+  title: "The Door That Was Always There",
+  epigraph: { text: "To be fully seen by somebody, then, and be loved anyhow — this is a human offering that can border on miraculous.", credit: "Elizabeth Gilbert" },
+  path: "b",
+  ending: "a",
+  pages: [
+
+    `<p>He wrote back within the hour: yes, he would come. He sent the reply before he could construct an argument against it, which was itself a new behaviour — the deliberate circumventing of his own argumentative facility, which had served him so well and so badly for so long. He would go. She had asked. He had no right to continue deciding what she needed.</p>
+    <p>They agreed, through two short notes, to meet at a pub in the village near her home, on a Saturday in October. Neutral ground. Public. She had suggested this, which he thought was wise, and had added: <em>I don't know what this is or what I want from it. I'm asking because the questions have become too loud.</em></p>
+    <p>He had spent eight months building the practice of carrying this silently. He had spent eight months deciding that his silence was a form of protection. And now Frances was telling him that the silence had not, from her side, been silent — that there were questions she had been living with, that something in the situation had opened in her, and that she was asking to understand it. She was not asking because Daniel had pushed. She was asking because she had arrived at the asking on her own.</p>
+    <p>He drove to Shropshire on a Saturday morning in October, through the kind of autumn countryside that has the quality of a condition rather than a backdrop — golden and slightly too beautiful, insisting on itself. He arrived early and sat in the pub car park for fifteen minutes.</p>`,
+
+    `<p>She was already inside. He knew her from the photographs — the blue coat, the particular quality of the upturned face, though the photographs had not conveyed the economy of her presence, the way she occupied her chair without taking up more space than was necessary. She was a small woman in her mid-forties with the face of someone who had learned not to perform emotions she wasn't having, and she looked at him when he came through the door with an expression he could not entirely read except that it was clear and direct and was not, he was almost certain, hostile.</p>
+    <p>"Daniel Voss," she said. Not a greeting. A confirmation.</p>
+    <p>"Frances." He sat across from her. The pub was warm and Saturday-afternoon quiet, the particular quality of a room that's mostly empty but not entirely, so that the acoustics were slightly too open for the conversation they were about to have. Neither of them suggested moving. He thought the slight vulnerability of the setting was, for Frances, deliberate — the kind of person who would not meet a man like him somewhere it was easy to lose control of the situation.</p>
+    <p>She ordered coffee. He ordered coffee. They looked at each other across the table with the concentrated attention of two people who are trying to understand the person in front of them before anything is said that makes understanding harder.</p>
+    <p>"I want to tell you something first," she said. "Before you say anything. I didn't reach out because I forgive you. I reached out because my son is old enough to ask questions now. He's been asking about his father for two years. And I realized — recently, suddenly, in the way you realize things you've been avoiding — that I was missing something. That there were people who knew Owen that I'd never spoken to. That I'd been protecting myself from those people and calling it strength." She paused. "I don't think it was strength."</p>`,
+
+    `<p>He told her. He had not planned to tell her in the first ten minutes, had imagined that there would be some preamble, some establishing of ground — but she had dispensed with preamble herself, and the directness required its own directness in return. He told her about the staircase, about the calculation, about the twelve years. He told it in the flat way he had learned to tell it — without the self-protective softening, without the might-not-have-helped formulation he had once built his life upon. He told it like a fact, because it was.</p>
+    <p>She listened. She did not cry. Her hands were flat on the table, still, and he watched them for movement and they did not move. When he was done she was quiet for a long time.</p>
+    <p>"He called me," she said finally. "That night. Before — I didn't know it was before. At ten o'clock. He said he was tired and that he missed me and that he was thinking about coming home early. We'd been — we'd been having a difficult time. I told him to enjoy the rest of the retreat and that we'd talk when he got back." She looked at the table. "I've thought about that phone call for twelve years. About whether what I said —"</p>
+    <p>"It wasn't —" he started.</p>
+    <p>"I know," she said quietly. "I know it wasn't. But knowing that doesn't stop the thinking." She looked up. "What you've told me doesn't stop my thinking either. It adds to it. But it gives it a — a shape it didn't have before. A place to be instead of just — everywhere."</p>`,
+
+    `<p>They stayed for two hours. She asked him about Owen — not about the staircase Owen, she said she had enough of that version, she had been living with that version — but about the other Owen, the daily Owen, the person he had worked beside for three years before the retreat. He told her about the bad jokes and the coffee-machine notes. He told her about the lunch and the consciousness conversation, which made her eyes change in a way he couldn't quite name. He told her about the birthday card. He told her about the afternoon with the photograph.</p>
+    <p>At the photograph, she stopped him. "He said that?" she said. <em>Isn't she something?</em> He said it like that?"</p>
+    <p>"Exactly like that. He wasn't being ironic. He wasn't performing it. He just — showed me the photograph and said it."</p>
+    <p>She was quiet for a moment. Then she said: "He was like that. He didn't — he didn't perform things. He had no ironic distance. I used to think it made him seem simple and then I realized it made everyone else seem complicated." She paused. "I miss that about him. It was inconvenient when he was alive and I miss it terribly now."</p>
+    <p>He looked at her across the table and thought that whatever he had expected from this meeting — confrontation, grief, accusation, even relief — he had not expected this: that the two of them would be sitting in a pub in Shropshire assembling a more complete picture of a person they had both loved imperfectly, from different angles, and that the assembling of it would feel like something being repaired.</p>`,
+
+    `<p>She said, before they left: "I want you to understand something. I'm still furious with you. I expect I'll be furious with you for the rest of my life, in the way you're furious with a fact that you can't change and can't stop knowing. But I also —" She stopped. She started again. "I also think you're carrying it. I can see that you are. And I think that matters, even if it doesn't fix anything. I'm not telling you it fixes anything."</p>
+    <p>"I know."</p>
+    <p>"I'm telling you I can see it. Because I spent twelve years not knowing whether anyone knew what had happened on that staircase — whether Owen's last moments were witnessed by anyone who — " Her voice changed, very slightly. "Whether he was alone. And now I know he wasn't. And that matters to me, even though I would rather have had the version where you helped him, obviously. Obviously I would rather have had that. But I didn't get that version. I got this one. And in this version — in this version, at least, he was seen."</p>
+    <p>Daniel could not speak for a moment. He had not, in all the permutations of this conversation he had rehearsed across all the months, imagined this: that what he had to offer Frances was not an accounting and not an apology but a witness. That he had been there, and that his being there — however he had failed it — was something.</p>
+    <p>"Yes," he said finally. "He was seen."</p>`,
+
+    `<p>He drove home through the October countryside, which had not changed from the morning but felt different moving through it — less insistent, more simply present. He thought about what Frances had said: <em>He was seen.</em> He thought about what she had given him in those words, and about whether he deserved the gift of them, and arrived, as he often arrived, at the position that deserving was not the operative concept. The gift had been given. The appropriate response was not to refuse it on the grounds of unworthiness but to receive it and try to carry it well.</p>
+    <p>He thought about the eight months of silence he had chosen, and whether the silence had been right. He had thought it was protecting her. It had been, he understood now, protecting the possibility of this meeting — the meeting could not have happened if he had sent the letter, because the solicitor and the coroner's review would have established a context in which a meeting was adversarial rather than voluntary. By choosing silence, he had left the door open for her to approach it on her own terms. He was not sure this had been his intention at the time. He was not sure it mattered what his intention had been. The outcome existed.</p>
+    <p>He was careful not to convert this into a retrospective justification of his choice. The choice had been made for reasons that were mostly about protecting himself. The fact that it had also, accidentally, produced something useful was not evidence of his moral clarity in making it. He tried to hold these things separately: the accident and the result, the intention and the outcome, the man he had been and the one he was trying to be.</p>`,
+
+    `<p>Lena, when he told her, was quiet for a long moment on the phone, and then said: "She sought you out?"</p>
+    <p>"Yes."</p>
+    <p>"And you told her."</p>
+    <p>"Everything."</p>
+    <p>Another silence. "How do you feel?"</p>
+    <p>He thought about it carefully. "Like something that was stored under pressure has been — not released, exactly, but stored differently. In a shape that's compatible with other things."</p>
+    <p>She made a sound that might have been a small laugh or might have been something else. "That's a very mathematical way to describe it."</p>
+    <p>"I'm a mathematician."</p>
+    <p>"You're really not, Dad. You teach maths. It's different." A pause. "I'm glad you went. I'm glad she asked."</p>
+    <p>"So am I."</p>
+    <p>"Are you going to see her again?"</p>
+    <p>"I don't know. I think that's her decision. I'm not going to push it." He paused. "I think I've been the one deciding things for long enough."</p>
+    <p>"Yes," Lena said. "That's probably right."</p>`,
+
+    `<p>Martin, when told, was characteristically direct. "She forgave you?"</p>
+    <p>"No. She was very clear about that."</p>
+    <p>"But she met you."</p>
+    <p>"Yes."</p>
+    <p>Martin thought about this. "I think that might be harder than forgiveness. To meet someone and stay angry. To give them something without letting go of the thing you're holding."</p>
+    <p>"I think you're right," Daniel said. "I think she's a more complicated person than forgiveness would have required her to be."</p>
+    <p>"And you? Where does that leave you?"</p>
+    <p>"Somewhere I can see from," Daniel said. "I'm not sure I've been able to see from it before. The staircase, Owen, what I did — I've always been inside it. Looking at it from the inside, using it to define myself one way or another, either as the man who made a terrible choice or the man who is properly suffering for it. And now it feels like I'm — adjacent to it. Like I can see it clearly because I'm not standing inside it."</p>
+    <p>"Is that better?"</p>
+    <p>"I think it might just be more accurate," Daniel said. "Which I'll take."</p>`,
+
+    `<p>Frances wrote to him in December. A short letter — three paragraphs, no salutation, signed with her first name only. She said that her son had asked again about his father, and she had told him more this time: about the coffee-machine notes, which made him laugh in the way Owen used to laugh, she said, with the whole face. She said that she had thought about what it meant that Daniel had been the person to give her these particular things, and that she had decided not to think about it — to just receive the things and let the source be what it was, complicated and irremediable and also, somehow, useful.</p>
+    <p>She said: <em>I've been trying to figure out whether what you gave me at the pub was something you were owed the giving of — whether you had the right to tell me, finally, when the timing was mine and not the authority's. I haven't figured it out. But I think the fact that I'm still trying to figure it out rather than simply being angry means something. I'm not sure what.</em></p>
+    <p>He sat with this for a long time. He thought about what she was describing — the uncertainty, the not-quite-anger, the trying-to-figure-it-out. He thought that this was perhaps the most honest possible response: not resolution in either direction but the active, uncomfortable, ongoing process of sitting with something real.</p>
+    <p>He wrote back three sentences: <em>You don't have to figure it out. I'm not asking for a verdict. I'm glad I went.</em></p>`,
+
+    `<p>The glass, in January, had been on his windowsill for ten months and had become, in the way of objects you live with long enough, simply part of the view. He had thought, after the meeting with Frances, that he might feel ready to put it away — that the meeting had been, in some sense, the thing the glass had been pointing toward, and that with it accomplished the glass could retire from significance. He found that he didn't want to put it away. Not because he needed it as a reminder but because putting it away would be another curatorial act, another management of the narrative, and he had been trying to stop doing those.</p>
+    <p>He left it where it was. He looked at it in the mornings. He thought about Owen with the particular quality of thought that had replaced the guilt-thought — not free of guilt, not separated from it, but not identical to it either. More like memory. The way you remember someone you knew well and who is gone, carrying both the fact of the knowing and the fact of the gone.</p>
+    <p>He thought: <em>Owen Marsh was entirely here. He talked about consciousness with the enthusiasm of a man who loved the question. He left passive-aggressive notes about the coffee machine. He loved his wife without irony. He trusted the wrong person on a staircase. He was thirty-one years old and is still thirty-one years old and I am forty-four and trying to be worthy of having been the person in that corridor, which I was not then and am trying to be now, imperfectly and permanently and for the rest of whatever time I have.</em></p>
+    <p>He stood at the window. The January light was thin and precise. The glass held it in the way glass holds light — simply, without trying, as a consequence of what it was made of.</p>
+    <p>He was trying to be something like that. He didn't know yet if he was succeeding. He thought the not-knowing might be the point.</p>`
+  ]
+},
+
+// ─────────────────────────────────────────────────────────────────
+// CHAPTER THREE — PATH B→B (Burned letter → Meets Frances, stays silent)
+// ─────────────────────────────────────────────────────────────────
+ch3bb: {
+  label: "Chapter Three",
+  title: "What Two Silences Make",
+  epigraph: { text: "We meet each other in what we have survived.", credit: "Attributed to no origin" },
+  path: "b",
+  ending: "b",
+  pages: [
+
+    `<p>He drove to Shropshire on a Saturday in October telling himself, and meaning it, that he was going to listen. That this meeting was not the occasion for his confession. That Frances had reached out for her own reasons, and those reasons were what mattered, and he was going to attend to them rather than importing his own agenda into her living room.</p>
+    <p>He had carried his thing for eight months consciously. He had practised the carrying. He knew the difference, by now, between the weight of it on days when he was managing it and days when he was actually holding it — the difference between the thing stored at a comfortable distance and the thing present in the hand. He intended to hold it today, fully, while listening to a woman who did not know he was holding it.</p>
+    <p>The pub in the village was warm and Saturday-quiet. She was already there — small, composed, with the face of someone who has decided to be brave about something and is managing the decision with considerable dignity. She looked at him when he came in with an expression that was careful and clear and contained something he could not immediately identify.</p>
+    <p>They sat across from each other. They ordered coffee. She said: "I don't know why I wrote to you, exactly. I've been trying to work that out."</p>`,
+
+    `<p>"Tell me what you arrive at," he said. "I'm not going anywhere."</p>
+    <p>She thought about this for a moment, in the manner of someone who is testing whether the offer is real. Apparently satisfied, she said: "My son is ten. He's been asking about his father for two years. Normal questions — what did he look like, was he funny, what did he like to do. And I've been answering them. But I've been aware, lately, of the borders of what I know. I knew Owen as my husband. I didn't know him as — as a colleague, as a friend. Those parts of him that existed away from me." She paused. "When I found your name in the inquest records, I thought — you knew him. In a context I couldn't access."</p>
+    <p>He understood what she was asking. She was not here for an accounting. She was here for Owen.</p>
+    <p>"What would you like to know?" he said.</p>
+    <p>She looked at him with a directness that was, he thought, practiced — the directness of a woman who had learned that she could not afford to look away from things. "Everything you remember. Anything. Tell me who he was to you."</p>
+    <p>So he told her. He told her about Owen as a colleague and as an occasional friend — about the bad jokes, which made her smile with the specific smile of recognition, and the coffee-machine notes, which made her laugh out loud, briefly and then with more restraint, the laugh of a person remembering something they had forgotten they'd forgotten. He told her about the lunch, about the consciousness conversation, about the birthday card with the anatomically improbable calculator.</p>
+    <p>He did not tell her about the staircase. He had decided this before he came, and he held the decision.</p>`,
+
+    `<p>She told him things in return. This surprised him — he had expected the meeting to be asymmetrical, him giving, her receiving — but she had things of her own she wanted to say, or perhaps just wanted to say to someone who had known Owen, for whom the name was not only a grief but a person. She told him about how Owen had proposed, which had been so uncharacteristically elaborate that she had initially thought something was wrong. She told him about the coffee-machine notes from the home front — how Owen had had opinions about the correct temperature for the kettle that were, she said, genuinely unreasonable and that she had found oddly comforting since his death, the way unreasonable opinions become precious. She told him that Owen had been, in the last year of his life, trying to drink less, and that he had been succeeding, and that she had not known at the time how proud she was of him for it.</p>
+    <p>Daniel listened. He received everything she told him with the full attention he had been practising, the kind that did not immediately process and file but simply held. He thought about the drinking — Owen had mentioned it to him too, in the confidence he had extended to the wrong person, and the fact of that confidence now sat at the table with them, invisible, known only to Daniel, contained.</p>
+    <p>He chose to contain it. Not every truth was his to distribute. Owen had told him in confidence. The confidence was as binding as it had ever been.</p>`,
+
+    `<p>They stayed for three hours, which was longer than he had anticipated and felt, at no point, like too long. He had expected the meeting to be uncomfortable throughout and in places it was, but it was also something he had not anticipated: ordinary. Two people who had known the same person talking about that person across a table. The extraordinary circumstance of why they were meeting — the staircase, the twelve years, the thing Daniel was holding — existed in the room as a pressure, a weather system, but it did not dominate the weather. Owen dominated it. Owen, assembled between them from their separate but overlapping knowledge of him, was the most present person in the room.</p>
+    <p>As they were preparing to leave, Frances said: "Can I ask you something? And you don't have to answer."</p>
+    <p>"Of course."</p>
+    <p>"There's something you're not telling me." She said it without accusation, as a simple observation. She was looking at him with the clear directness she had had from the beginning. "I don't know what it is. But I can feel the shape of something. And I want you to know that I'm not asking you to tell me. I'm just — I want you to know that I can see it."</p>
+    <p>He was very still for a moment.</p>
+    <p>"Yes," he said. "There is something." He looked at her. He tried to meet the clearness of her look with an equivalent clearness. "And I need to tell you that I've thought very hard about whether to share it with you. And I've decided not to — not because I'm protecting myself, but because I made a decision, months ago, that it would cause you pain without changing anything that can be changed. I may be wrong about that. I'm aware I may be wrong. But I need you to know that the decision was about you and not about me."</p>
+    <p>She looked at him for a long moment. "Is it about how he died?"</p>
+    <p>"It's adjacent to that."</p>
+    <p>"And you've decided I don't need to know."</p>
+    <p>"I've decided," he said carefully, "that you should have the choice. So I'm telling you there's something. And I'm telling you I think — I think, not certainly — that knowing it would be harder than not knowing it. And I'm leaving it to you."</p>`,
+
+    `<p>She was quiet for a moment. He waited. He did not fill the space.</p>
+    <p>"Don't tell me," she said finally. "Not today. I came here for Owen. I found Owen. That's what I needed today." She paused. "If I ever need to know the other thing — I'll ask. And I expect you to tell me."</p>
+    <p>"Yes," he said. "I will."</p>
+    <p>She nodded. They stood, put on their coats, went out into the October afternoon. They stood on the pavement outside the pub for a moment, two people who had just done something that did not have a name, in the company of a person who was not there.</p>
+    <p>"He would have liked you," Frances said. "In the way that he liked complicated things. He always said that uncomplicated people were easier but less interesting." She looked at him. "He would have found you very interesting."</p>
+    <p>Daniel did not know what to do with this. He received it. "Thank you," he said. "For today. For — for letting me tell him to you."</p>
+    <p>She nodded. She turned and walked toward the car park. He stood and watched her go and thought that this was what he had, finally: not absolution, not forgiveness, not resolution, but this — a person who had looked at him with clear eyes and known there was something he held and had said, for now, keep it. He was still carrying the weight. But it had been seen. It had been acknowledged and left in his hands by a person who had the right to take it. He had not been relieved of it. He had been trusted with it.</p>
+    <p>He drove home through the October light.</p>`,
+
+    `<p>He told Lena about the meeting, imprecisely but truly — that he had met Owen's wife, that she had asked for memories, that he had given them, that something significant had happened that he could not fully describe. Lena, who had a gift for not requiring him to describe things fully, said: "Did it help?"</p>
+    <p>"Her or me?"</p>
+    <p>"Either. Both."</p>
+    <p>"I think it helped her with what she came for," he said. "For me — it's more complicated. Something changed. But I'm still carrying the same thing. I'm just carrying it with her knowledge that it exists."</p>
+    <p>"Is that enough?"</p>
+    <p>He thought about it. "For now," he said. "I think for now it is."</p>
+    <p>"And later?"</p>
+    <p>"If she asks," he said, "I'll tell her everything. I promised her that. And I mean it."</p>
+    <p>There was a pause on the line. Then: "Okay," Lena said. "Dad. I think that's — I think that's right."</p>`,
+
+    `<p>Martin said, when told: "You held it."</p>
+    <p>"Yes."</p>
+    <p>"Even sitting across from her."</p>
+    <p>"She knew something was there. I acknowledged that. I told her it was her choice whether to ask."</p>
+    <p>"And she didn't ask."</p>
+    <p>"Not today."</p>
+    <p>Martin was quiet for a moment, in the thinking way rather than the processing way. "I think there's something right about that," he said finally. "I think there's something right about giving someone the knowledge that a thing exists without forcing the thing on them. It's — it's more respectful than I would have expected from you."</p>
+    <p>"Than you would have expected from the me that I was," Daniel corrected.</p>
+    <p>"Yes," Martin said. "Fair enough."</p>`,
+
+    `<p>The glass remained on the windowsill. He had expected, after the meeting, that he would finally feel ready to put it away — that the meeting had provided whatever the glass had been orienting toward. He found instead that the glass and the meeting existed in separate registers; that what had happened with Frances was its own thing, complete in itself, and that the glass was something different — a reminder not of the staircase or the letter or the meeting but of the specific quality of attention that the glass had required of him, the looking-at-it-without-flinching-from-it that he had been practising all these months.</p>
+    <p>He left it where it was. He thought he might always leave it where it was.</p>
+    <p>In December, Frances sent a short note. She thanked him for October. She said her son had been told about the coffee-machine notes, which had made him laugh in the whole-face way, she said. She said she thought she might write again, in the new year, with more questions about Owen — if that was all right.</p>
+    <p>He wrote back: yes. Always.</p>`,
+
+    `<p>He thought about the weight he was carrying, in January, as he had thought about it every day since March. He tried to think about it as precisely as possible — not as a concept but as a fact, with specific dimensions. The fact was this: he had watched a man die and had not tried to help him and had then concealed this for twelve years. The dimensions were these: the man was real, had been loved, was irreplaceable. The concealment had shaped twelve years of Daniel's life and had deprived Owen's wife and son of information that was arguably theirs. The carrying was ongoing. The carrying would always be ongoing.</p>
+    <p>He had not confessed, in the formal sense. He had not sent a letter to the coroner or to Frances directly. He was carrying something that the world did not know in any official or recorded way. He had chosen to carry it consciously rather than release it, and the choice had produced, so far, a meeting with Frances that had given her Owen in some way she had needed, and had given him — what? Not relief. Not absolution. The knowledge that he was carrying something real, with both eyes open, in the company of a woman who knew the carrying existed even if she did not know its full weight.</p>
+    <p>He sat with this as he had sat with it every day. He asked: <em>who does the silence serve?</em> He arrived at: her, for now, because she said so. And me, which I am noting and watching for. And the day she asks, I will tell her. That is the promise. The promise is what makes the silence something other than the old silence.</p>`,
+
+    `<p>He went to the churchyard in February. He drove to Shropshire on a grey Saturday, found the church, found the headstone, sat in the cold with the simple grey granite in front of him and the words: <em>He was entirely here.</em></p>
+    <p>He was here, Daniel thought. I was here. We were in the same corridor and I turned around, and that is what happened, and I am not going to make it into something else by the force of my guilt or the quality of my subsequent carrying. It happened. I was there. He was entirely here and I was only partially here, and that is the accurate record, and I intend to hold it accurately for however long I have.</p>
+    <p>He sat in the cold for an hour. He drove home through Shropshire in the February afternoon, through countryside that had the particular nakedness of midwinter — all structure, no covering, every branch and hedgerow visible in its actual form. He thought this was, perhaps, the appropriate season for what he was trying to do: to live in his actual form, without covering, which was cold and exposed and also, against all his expectations, something approaching free.</p>
+    <p>Not free of it. Free in it. There was a difference that he was only beginning to understand, and he thought it might take the rest of his life to understand it fully, and he thought this was probably right — that some understandings were properly life-length, that the expectation of arriving at them sooner was itself a form of impatience he could not afford.</p>
+    <p>He drove home. The glass was on the windowsill. February light, thin and exact, reached it clearly. He stood at the window and held the view — the glass, the light, the car park below, the particular February sky — and he was in it, not managed, not performing, not behind anything. He was in the room. He was in his life. He was carrying what he was carrying and he was, with it, entirely here.</p>
+    <p>The glass was empty. He thought this was probably correct.</p>`
+  ]
+}
+
+}; // end STORY
+
+// ══════════════════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════════════════
+const state = {
+  chapter: 'ch1',
+  pageIdx: 0,
+  path1: null,   // 'a' or 'b' (Chapter 1 choice)
+  path2: null,   // 'a' or 'b' (Chapter 2 choice)
+  choiceMade: false,
+  finished: false
+};
+
+function chapterData() { return STORY[state.chapter]; }
+
+// ══════════════════════════════════════════════════════════════════
+// RENDERING
+// ══════════════════════════════════════════════════════════════════
+function openBook() {
+  document.getElementById('cover').classList.add('out');
+  document.getElementById('reader').classList.add('on');
+  render();
+}
+
+function render() {
+  const cd = chapterData();
+  const wrap = document.getElementById('page-wrap');
+  const totalPages = cd.pages.length;
+  const isLastPage = state.pageIdx >= totalPages - 1;
+  const onBranch = isLastPage && cd.branchPoint && !state.choiceMade;
+  const isEnding = state.finished;
+
+  updateHeader(cd);
+  updateProgress(cd, totalPages);
+  updateSidebar();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  let html = '';
+
+  // Chapter opener (page 0 only)
+  if (state.pageIdx === 0) {
+    html += `<div class="ch-opener">`;
+    html += `<span class="ch-label">${cd.label}</span>`;
+    if (cd.path) {
+      const pClass = cd.path === 'a' ? 'a' : 'b';
+      const pLabel = cd.path === 'a' ? 'The Path of Reckoning' : 'The Path of Vigil';
+      html += `<div class="ch-path-note ${pClass}">${pLabel}</div>`;
+    }
+    if (cd.ending) {
+      const eClass = cd.ending === 'a' ? 'a' : 'b';
+      const eLabel = cd.ending === 'a' ? 'Ending — The Open Door' : 'Ending — The Held Weight';
+      html += `<div class="ch-path-note ${eClass}" style="margin-top:0.4rem">${eLabel}</div>`;
+    }
+    html += `<h1 class="ch-title">${cd.title}</h1>`;
+    html += `<p class="ch-epigraph">"${cd.epigraph.text}"<cite>— ${cd.epigraph.credit}</cite></p>`;
+    html += `</div>`;
+  }
+
+  // Prose
+  html += `<div class="prose">${cd.pages[state.pageIdx]}</div>`;
+
+  // Branch point
+  if (isLastPage && cd.branchPoint) {
+    const bp = cd.branchPoint;
+    html += `<div class="branch-section">`;
+    html += `<div class="branch-divider"><span>✦ &nbsp; The Threshold &nbsp; ✦</span></div>`;
+    html += `<p class="branch-quandary">${bp.quandary}</p>`;
+    html += `<p class="branch-context">${bp.context}</p>`;
+
+    if (!state.choiceMade) {
+      html += `<div class="branch-grid">`;
+      bp.choices.forEach((c, i) => {
+        const cls = c.label === 'a' ? 'card-a' : 'card-b';
+        html += `<div class="branch-card ${cls}" onclick="makeChoice(${i})">
+          <span class="bc-path-label">${c.path}</span>
+          <div class="bc-title">${c.title}</div>
+          <p class="bc-desc">${c.desc}</p>
+        </div>`;
+      });
+      html += `</div>`;
+    } else {
+      const chosen = state._lastChoice;
+      const lbl = chosen.label;
+      html += `<div class="consequence-wrap">
+        <span class="csq-label ${lbl}">${chosen.path}</span>
+        <p class="csq-text">${chosen.consequence}</p>
+        <p class="csq-continue">Continue reading to see where this leads...</p>
+      </div>`;
+    }
+    html += `</div>`;
+  }
+
+  // Ending
+  if (isEnding && !cd.branchPoint) {
+    const pathLabel = state.path1 === 'a'
+      ? (state.path2 === 'a' ? 'The Path of Reckoning → The Open Door' : 'The Path of Reckoning → The Held Weight')
+      : (state.path2 === 'a' ? 'The Path of Vigil → The Open Door' : 'The Path of Vigil → The Held Weight');
+    html += `<div class="ending-wrap">
+      <div class="ending-label">✦ &nbsp; Fin &nbsp; ✦</div>
+      <h2 class="ending-title">You have reached the end of one path.</h2>
+      <p class="ending-text">You walked: <em>${pathLabel}</em>. The other roads remain. Every rereading is a different reckoning.</p>
+      <button class="btn-restart" onclick="restart()">Read again from the beginning</button>
+    </div>`;
+  }
+
+  // Navigation
+  const prevDisabled = state.chapter === 'ch1' && state.pageIdx === 0;
+  const nextDisabled = onBranch;
+  const isChapterEnd = isLastPage && state.choiceMade;
+  const nextLabel = isChapterEnd ? 'Next Chapter ›' : (isLastPage && !cd.branchPoint ? 'Finish' : 'Continue ›');
+
+  html += `<div class="page-nav">
+    <button class="pnav-btn" ${prevDisabled ? 'disabled' : ''} onclick="prevPage()">‹ Back</button>
+    <div class="pnav-info">
+      Page ${state.pageIdx + 1} / ${totalPages}
+      ${onBranch ? '<small>Choose to continue</small>' : ''}
+    </div>
+    <button class="pnav-btn" ${nextDisabled ? 'disabled' : ''} onclick="nextPage()">${nextLabel}</button>
+  </div>`;
+
+  wrap.innerHTML = html;
+  wrap.classList.remove('fading');
+  void wrap.offsetWidth;
+  wrap.classList.add('fading');
+}
+
+function updateHeader(cd) {
+  document.getElementById('hdr-ch').textContent = cd.label + ' — ' + cd.title;
+  const pathEl = document.getElementById('hdr-path');
+  if (state.path1) {
+    pathEl.classList.remove('hidden', 'path-a', 'path-b');
+    if (state.path1 === 'a') {
+      pathEl.classList.add('path-a');
+      pathEl.textContent = 'Path of Reckoning';
+    } else {
+      pathEl.classList.add('path-b');
+      pathEl.textContent = 'Path of Vigil';
+    }
+  } else {
+    pathEl.classList.add('hidden');
+  }
+}
+
+function updateProgress(cd, totalPages) {
+  const chapters = ['ch1', 'ch2a', 'ch2b', 'ch3aa', 'ch3ab', 'ch3ba', 'ch3bb'];
+  const chIdx = chapters.indexOf(state.chapter);
+  const totalChapters = 3;
+  const chProgress = (chIdx >= 2 ? 2 : chIdx === 0 ? 0 : 1);
+  const pct = ((chProgress / totalChapters) + (state.pageIdx / totalPages) * (1 / totalChapters)) * 100;
+  document.getElementById('progress').style.width = Math.min(100, pct) + '%';
+}
+
+function updateSidebar() {
+  const chapterNum = state.chapter === 'ch1' ? 0 : (state.chapter.startsWith('ch2') ? 1 : 2);
+  for (let i = 0; i < 3; i++) {
+    const el = document.getElementById(`ps-${i}`);
+    el.classList.remove('active', 'done');
+    if (i === chapterNum) el.classList.add('active');
+    else if (i < chapterNum) el.classList.add('done');
+  }
+}
+
+function makeChoice(idx) {
+  const cd = chapterData();
+  const chosen = cd.branchPoint.choices[idx];
+  state.choiceMade = true;
+  state._lastChoice = chosen;
+
+  if (state.chapter === 'ch1') {
+    state.path1 = chosen.label;
+  } else {
+    state.path2 = chosen.label;
+  }
+  render();
+}
+
+function nextPage() {
+  const cd = chapterData();
+  const isLastPage = state.pageIdx >= cd.pages.length - 1;
+
+  if (isLastPage && state.choiceMade) {
+    // Advance to next chapter
+    state.choiceMade = false;
+    state.pageIdx = 0;
+
+    if (state.chapter === 'ch1') {
+      state.chapter = state.path1 === 'a' ? 'ch2a' : 'ch2b';
+    } else if (state.chapter === 'ch2a') {
+      state.chapter = state.path2 === 'a' ? 'ch3aa' : 'ch3ab';
+    } else if (state.chapter === 'ch2b') {
+      state.chapter = state.path2 === 'a' ? 'ch3ba' : 'ch3bb';
+    }
+    render();
+  } else if (!isLastPage) {
+    state.pageIdx++;
+    render();
+  } else if (isLastPage && !cd.branchPoint) {
+    // End of final chapter
+    state.finished = true;
+    render();
+  }
+}
+
+function prevPage() {
+  if (state.pageIdx > 0) {
+    state.pageIdx--;
+    state.choiceMade = false;
+    render();
+  } else if (state.chapter !== 'ch1') {
+    // Go back to previous chapter's last page
+    if (state.chapter.startsWith('ch2')) {
+      state.chapter = 'ch1';
+      state.path1 = null;
+    } else {
+      state.chapter = state.chapter === 'ch3aa' || state.chapter === 'ch3ab' ? 'ch2a' : 'ch2b';
+      state.path2 = null;
+    }
+    state.pageIdx = chapterData().pages.length - 1;
+    state.choiceMade = true;
+    render();
+  }
+}
+
+function restart() {
+  state.chapter = 'ch1';
+  state.pageIdx = 0;
+  state.path1 = null;
+  state.path2 = null;
+  state.choiceMade = false;
+  state.finished = false;
+  state._lastChoice = null;
+  render();
+}
+</script>
+</body>
+</html>
